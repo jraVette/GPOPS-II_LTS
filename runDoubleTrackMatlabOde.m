@@ -25,15 +25,15 @@ sSpan = [s(1) s(end)]; %#ok s will be an array
 
 options = odeset('MaxStep',1);
 [sSol,xSol] = ode45(@(s,x)fourwheelMatlabODE(s,x,u,sSpace,auxdata), sSpan, x0,options);
-stateNames = { 'vx','omegaWheel_L1'};%,'torqueDemand'};
-controlNames = {'T'};
-units =      {'s';'m/s';'rad/s';'N*m'};
-names = {'Time';'Vx';'Wheel Speed Left Front';'Torque'};
+% stateNames = { 'vx','omegaWheel_L1'};%,'torqueDemand'};
+% controlNames = {'T'};
+% units =      {'s';'m/s';'rad/s';'N*m'};
+% names = {'Time';'Vx';'Wheel Speed Left Front';'Torque'};
 
-% stateNames = { 'vx'};%,'torqueDemand'};
-% controlNames = {'slipRatio'};
-% units =      {'s';'m/s';''};
-% names = {'Time';'Vx';'Slip Ratio'};
+stateNames = { 'vx'};%,'torqueDemand'};
+controlNames = {'slipRatio'};
+units =      {'s';'m/s';''};
+names = {'Time';'Vx';'Slip Ratio'};
      
 %Resample to requested input
 SSOL = s;

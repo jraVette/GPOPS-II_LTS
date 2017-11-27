@@ -16,18 +16,18 @@ sf          = 10;
     s0          = 0;                                             %[m] s
     sf          = 10;
     s = s0:1:sf;
-    u = 1002*ones(size(s));
+    u = 0.1*ones(size(s));
     vx0 = 10;
     omega_front0 = vx0./vehicle.tire_front.reff.meas;
-    x0 = [vx0 omega_front0];
-%     x0 = vx0;
+%     x0 = [vx0 omega_front0];
+    x0 = vx0;
     auxdata.vehicle = vehicle;
     guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
     guessDaq = calculateAlgebraicStates(guessDaq);
     
 
-stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
-% stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
+% stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
+stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
 timeGuess               = [rowVector(s)];   
 x0                      = stateGuess(1,:);
 controlGuess            = [rowVector(u)];
@@ -42,25 +42,25 @@ vxUb        = 100;%69.9240505593388;                                        %Ori
 % rMax        = 55*myConstants.deg2rad;                                  %Orignal bound 45 deg/s
 % tLb         = 0;
 % tUb         = 15;%4.609395789295020;                                       %Oringal bounds
-omegaLb     = vxLb/vehicle.tire_front.reff.meas;
-omegaUb     = vxUb/vehicle.tire_front.reff.meas;
+% omegaLb     = vxLb/vehicle.tire_front.reff.meas;
+% omegaUb     = vxUb/vehicle.tire_front.reff.meas;
 % omegaLb = -1e5;
 % omegaUb = 1e5;
-TMax        = 5000;
+% TMax        = 5000;
 % TRate       = 100*1000;                                                 % N*m/s
 
-bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
-bounds.ubX              = [vxUb    omegaUb];%   TMax];
-% bounds.lbX              = [vxLb  ];%  -TMax]; 
-% bounds.ubX              = [vxUb  ];%   TMax];
+% bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
+% bounds.ubX              = [vxUb    omegaUb];%   TMax];
+bounds.lbX              = [vxLb  ];%  -TMax]; 
+bounds.ubX              = [vxUb  ];%   TMax];
 
 % bounds.lbU              = [ -TMax];
 % bounds.ubU              = [  TMax];
 bounds.lbU              = [ -1];
 bounds.ubU              = [ 1];
 
-bounds.pathLower        = -0.2;
-bounds.pathUpper        = 0.2;
+% bounds.pathLower        = -0.2;
+% bounds.pathUpper        = 0.2;
 auxdata.bounds = bounds;
 % bounds.phase.integral.lower     = -1e6;
 % bounds.phase.integral.upper     = 1e6;
@@ -123,8 +123,8 @@ bounds.phase.finalstate.lower   = bounds.lbX;
 bounds.phase.finalstate.upper   = bounds.ubX; 
 bounds.phase.control.lower      = bounds.lbU; 
 bounds.phase.control.upper      = bounds.ubU; 
-bounds.phase.path.lower         = bounds.pathLower;
-bounds.phase.path.upper         = bounds.pathUpper;
+% bounds.phase.path.lower         = bounds.pathLower;
+% bounds.phase.path.upper         = bounds.pathUpper;
 
 
 %-------------------------------------------------------------------------%
