@@ -9,10 +9,16 @@ load(fullVehicleFile);
 
 %Names
 indepVarName = 'time';
-stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
-controlNames = {'T'};
-units =      {'s';'m/s';'rad/s';'N*m'};
-names = {'Time';'Vx';'Wheel Speed Left Front';'Torque'};
+stateNames = { 'vx';'omegaWheel_L1';'torqueDemand'};
+controlNames = {'u2'};
+units =      {'s';'m/s';'rad/s';'N*m';'N*m/s'};
+names = {'Time';'Vx';'Wheel Speed Left Front';'Torque Demand';'Torque Demand Rate'};
+
+% indepVarName = 'time';
+% stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
+% controlNames = {'T'};
+% units =      {'s';'m/s';'rad/s';'N*m'};
+% names = {'Time';'Vx';'Wheel Speed Left Front';'Torque'};
 
 % stateNames = { 'vx'};%,'torqueDemand'};
 % controlNames = {'slipRatio'};
@@ -29,10 +35,11 @@ sf          = 10;
     s0          = 0;                                             %[m] s
     sf          = 10;
     s = s0:1:sf;
-    u = 0.1343*ones(size(s));
+    u = 0*ones(size(s));
     vx0 = 10;
-    omega_front0 = vx0./vehicle.tire_front.reff.meas;
-    x0 = [vx0 omega_front0];
+    omega_front0 = vx0*(0.1557+1)./vehicle.tire_front.reff.meas;
+    T0 = 0.134334825483566*5000;
+    x0 = [vx0 omega_front0 T0];
 %     x0 = vx0;
     auxdata.vehicle = vehicle;
     auxdata.indepVarName = indepVarName;
@@ -42,10 +49,14 @@ sf          = 10;
     auxdata.names = names;
     guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
     guessDaq = calculateAlgebraicStates(guessDaq);
+% guessDaq = load('snapshot.mat');
+% guessDaq = guessDaq.daq;
+% getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})
     
-
-stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
+stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1','torqueDemand'});
+% stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
 % stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
+
 timeGuess               = [rowVector(s)];   
 x0                      = stateGuess(1,:);
 controlGuess            = [rowVector(u)];
@@ -64,11 +75,13 @@ omegaLb     = vxLb/vehicle.tire_front.reff.meas;
 omegaUb     = vxUb/vehicle.tire_front.reff.meas;
 % omegaLb = -1e5;
 % omegaUb = 1e5;
-% TMax        = 5000;
-% TRate       = 100*1000;                                                 % N*m/s
+TMax        = 5000;
+TRate       = 100*1000/5000;                                                 % N*m/s
 
-bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
-bounds.ubX              = [vxUb    omegaUb];%   TMax];
+bounds.lbX              = [vxLb    omegaLb   -TMax]; 
+bounds.ubX              = [vxUb    omegaUb    TMax];
+% bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
+% bounds.ubX              = [vxUb    omegaUb];%   TMax];
 % bounds.lbX              = [vxLb  ];%  -TMax]; 
 % bounds.ubX              = [vxUb  ];%   TMax];
 
@@ -104,7 +117,7 @@ gpopsOptions.setup.name                        = 'quadCar';
 gpopsOptions.setup.nlp.solver                  = 'ipopt';
 gpopsOptions.setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';%
 gpopsOptions.setup.derivatives.derivativelevel = 'second';
-gpopsOptions.setup.scales.method               = 'automatic-hybridUpdate';
+gpopsOptions.setup.scales.method               = 'none';%'automatic-hybridUpdate';
 gpopsOptions.setup.method                      = 'RPM-Differentiation';
 gpopsOptions.setup.displaylevel                = 2;
 
@@ -151,7 +164,7 @@ bounds.phase.path.upper         = bounds.pathUpper;
 guess.phase.time    = timeGuess; 
 guess.phase.state   = stateGuess;
 guess.phase.control = controlGuess;
-guess.phase.integral = trapz(timeGuess,1./stateGuess(:,1));
+% guess.phase.integral = trapz(timeGuess,1./stateGuess(:,1));
 
 
 

@@ -13,9 +13,11 @@ function daq = calculateAlgebraicStates(daq)
 
 output = daq.gpopsOutput;
 
-input.phase.time = output.result.solution.phase.time;
-input.phase.state = output.result.solution.phase.state;
-input.phase.control = output.result.solution.phase.control;
+solutionField = 'interpsolution'; %field in the gpops results output.results.(solutionField) originally just solution but looks like the interpsol is more what I need.
+
+input.phase.time = output.result.(solutionField).phase.time;
+input.phase.state = output.result.(solutionField).phase.state;
+input.phase.control = output.result.(solutionField).phase.control;
 
 input.auxdata.vehicle = daq.vehicle;
 

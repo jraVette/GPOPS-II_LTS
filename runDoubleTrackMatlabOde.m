@@ -39,9 +39,11 @@ daq = parseMatlabOdeOutput(SSOL,XSOL,u,auxdata.indepVarName,...
     auxdata.controlNames,...
     auxdata.units,...
     auxdata.names);
-gpopsOutput.result.solution.phase.time = SSOL;
-gpopsOutput.result.solution.phase.state = XSOL;
-gpopsOutput.result.solution.phase.control = u;
+
+solutionField = 'interpsolution'; %field in the gpops results output.results.(solutionField) originally just solution but looks like the interpsol is more what I need.
+gpopsOutput.result.(solutionField).phase.time = SSOL;
+gpopsOutput.result.(solutionField).phase.state = XSOL;
+gpopsOutput.result.(solutionField).phase.control = u;
 gpopsOutput = addNotesToDaqFile(gpopsOutput,'Just added this to mimic gpops output for calculating algebraic states');
 daq.gpopsOutput = gpopsOutput; 
 daq.vehicle = auxdata.vehicle;

@@ -17,9 +17,11 @@ s                   = input.phase.time;
 %States
 vx                  = input.phase.state(:,1);
 omega_L1            = input.phase.state(:,2);
+T_drive_L1          = input.phase.state(:,3);
 
 %Control
-T_drive_L1          = input.phase.control(:,1)*5000;
+u2                  = input.phase.control(:,1)*5000;
+% T_drive_L1          = input.phase.control(:,1)*5000;
 % kappa_L1          = input.phase.control(:,1);
 
 %% Dynamic System
@@ -42,9 +44,9 @@ dvx_dt = fx_L1./m;
 domega_L1_dt = (T_drive_L1 - reff_f*fx_L1)./Jr_f;
 
 
-phaseout.dynamics = [dvx_dt domega_L1_dt];
+phaseout.dynamics = [dvx_dt domega_L1_dt u2];
 % phaseout.dynamics = [dvx_dt ];
-% phaseout.integrand = 1./vx;
+% phaseout.integrand = u2.^2;
 phaseout.path = kappa_L1;
 
 phaseout.algebraicStates.slipRatio_L1.meas = kappa_L1;
