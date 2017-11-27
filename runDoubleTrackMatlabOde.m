@@ -25,15 +25,7 @@ sSpan = [s(1) s(end)]; %#ok s will be an array
 
 options = odeset('MaxStep',1);
 [sSol,xSol] = ode45(@(s,x)fourwheelMatlabODE(s,x,u,sSpace,auxdata), sSpan, x0,options);
-% stateNames = { 'vx','omegaWheel_L1'};%,'torqueDemand'};
-% controlNames = {'T'};
-% units =      {'s';'m/s';'rad/s';'N*m'};
-% names = {'Time';'Vx';'Wheel Speed Left Front';'Torque'};
 
-stateNames = { 'vx'};%,'torqueDemand'};
-controlNames = {'slipRatio'};
-units =      {'s';'m/s';''};
-names = {'Time';'Vx';'Slip Ratio'};
      
 %Resample to requested input
 SSOL = s;
@@ -42,7 +34,11 @@ for i = 1:size(xSol,2)
 end
 
 
-daq = parseMatlabOdeOutput(SSOL,XSOL,u,'time',stateNames,controlNames,units,names);
+daq = parseMatlabOdeOutput(SSOL,XSOL,u,auxdata.indepVarName,...
+    auxdata.stateNames,...
+    auxdata.controlNames,...
+    auxdata.units,...
+    auxdata.names);
 gpopsOutput.result.solution.phase.time = SSOL;
 gpopsOutput.result.solution.phase.state = XSOL;
 gpopsOutput.result.solution.phase.control = u;

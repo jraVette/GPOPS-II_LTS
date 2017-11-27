@@ -7,6 +7,19 @@ carFileName = 'LimebeerF1Car.mat';
 fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
 load(fullVehicleFile);
 
+%Names
+indepVarName = 'time';
+stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
+controlNames = {'T'};
+units =      {'s';'m/s';'rad/s';'N*m'};
+names = {'Time';'Vx';'Wheel Speed Left Front';'Torque'};
+
+% stateNames = { 'vx'};%,'torqueDemand'};
+% controlNames = {'slipRatio'};
+% units =      {'s';'m/s';''};
+% names = {'Time';'Vx';'Slip Ratio'};
+
+
 %Initalizaiton
 s0          = 0;                                             %[m] s
 sf          = 10;
@@ -16,18 +29,23 @@ sf          = 10;
     s0          = 0;                                             %[m] s
     sf          = 10;
     s = s0:1:sf;
-    u = 0.1*ones(size(s));
+    u = 0.1343*ones(size(s));
     vx0 = 10;
     omega_front0 = vx0./vehicle.tire_front.reff.meas;
-%     x0 = [vx0 omega_front0];
-    x0 = vx0;
+    x0 = [vx0 omega_front0];
+%     x0 = vx0;
     auxdata.vehicle = vehicle;
+    auxdata.indepVarName = indepVarName;
+    auxdata.stateNames = stateNames;
+    auxdata.controlNames = controlNames;
+    auxdata.units = units;
+    auxdata.names = names;
     guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
     guessDaq = calculateAlgebraicStates(guessDaq);
     
 
-% stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
-stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
+stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
+% stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
 timeGuess               = [rowVector(s)];   
 x0                      = stateGuess(1,:);
 controlGuess            = [rowVector(u)];
@@ -42,25 +60,25 @@ vxUb        = 100;%69.9240505593388;                                        %Ori
 % rMax        = 55*myConstants.deg2rad;                                  %Orignal bound 45 deg/s
 % tLb         = 0;
 % tUb         = 15;%4.609395789295020;                                       %Oringal bounds
-% omegaLb     = vxLb/vehicle.tire_front.reff.meas;
-% omegaUb     = vxUb/vehicle.tire_front.reff.meas;
+omegaLb     = vxLb/vehicle.tire_front.reff.meas;
+omegaUb     = vxUb/vehicle.tire_front.reff.meas;
 % omegaLb = -1e5;
 % omegaUb = 1e5;
 % TMax        = 5000;
 % TRate       = 100*1000;                                                 % N*m/s
 
-% bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
-% bounds.ubX              = [vxUb    omegaUb];%   TMax];
-bounds.lbX              = [vxLb  ];%  -TMax]; 
-bounds.ubX              = [vxUb  ];%   TMax];
+bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
+bounds.ubX              = [vxUb    omegaUb];%   TMax];
+% bounds.lbX              = [vxLb  ];%  -TMax]; 
+% bounds.ubX              = [vxUb  ];%   TMax];
 
 % bounds.lbU              = [ -TMax];
 % bounds.ubU              = [  TMax];
 bounds.lbU              = [ -1];
 bounds.ubU              = [ 1];
 
-% bounds.pathLower        = -0.2;
-% bounds.pathUpper        = 0.2;
+bounds.pathLower        = -0.2;
+bounds.pathUpper        = 0.2;
 auxdata.bounds = bounds;
 % bounds.phase.integral.lower     = -1e6;
 % bounds.phase.integral.upper     = 1e6;
@@ -123,8 +141,8 @@ bounds.phase.finalstate.lower   = bounds.lbX;
 bounds.phase.finalstate.upper   = bounds.ubX; 
 bounds.phase.control.lower      = bounds.lbU; 
 bounds.phase.control.upper      = bounds.ubU; 
-% bounds.phase.path.lower         = bounds.pathLower;
-% bounds.phase.path.upper         = bounds.pathUpper;
+bounds.phase.path.lower         = bounds.pathLower;
+bounds.phase.path.upper         = bounds.pathUpper;
 
 
 %-------------------------------------------------------------------------%
@@ -206,11 +224,11 @@ end
 
 %Daq the solution
                             %    vx   vy   r  t
-daqGpops = parseGpops2toDaq(output,{'vx';'omega_L1'},...
-                              {'uT'},...
-                              'time',...
-                              {'s';'m/s';'rad/s';'N*m'},...
-                              {'Time', 'Wheel Speed Left Front','Torque Demand'});
+daqGpops = parseGpops2toDaq(output,stateNames,...
+                              controlNames,...
+                              indepVarName,...
+                              units,...
+                              names);
 daq = catstruct(daq,daqGpops);
 daq.gpopsSetup = setup;
 
