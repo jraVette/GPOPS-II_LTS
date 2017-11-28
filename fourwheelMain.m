@@ -1,10 +1,10 @@
 
 %Load Vehicle 
 vehicleDirectory = fullfile(jatecPath,'Resources/In house code/Vehicle Parameters/');
-% carFilename = '2015_Corvette_C7R.mat';
-% fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
-carFileName = 'LimebeerF1Car.mat';
-fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
+carFilename = '2015_Corvette_C7R.mat';
+fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
+% carFileName = 'LimebeerF1Car.mat';
+% fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
 load(fullVehicleFile);
 
 %Names
@@ -39,12 +39,13 @@ sf          = 10;
     vx0 = 10;
     omega_front0 = vx0*(0.1557+1)./vehicle.tire_front.reff.meas;
     omega_front0 = vx0*(0.0743023072420859+1)./vehicle.tire_front.reff.meas;
-    omega_front0 = vx0*(0.082637192584081+1)./vehicle.tire_front.reff.meas;
+    omega_front0 = vx0*(0.0826371925855145+1)./vehicle.tire_front.reff.meas;
 %     T0 = 0.134334825483566*5000;
 %     T0 = 2015;
     T0 = 2012.4;
     T0 = 2012.55461547843;
     T0 = 1991.12674097601;
+    T0 = 2028.34209728064;
     x0 = [vx0 omega_front0 T0];
 %     x0 = vx0;
     auxdata.vehicle = vehicle;
