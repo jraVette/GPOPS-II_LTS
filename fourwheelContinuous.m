@@ -32,9 +32,11 @@ kappa_L1    = -(1 + reff_f*-omega_L1./vx);
 % fx_L1 = simplifiedPacejka(2000,0,kappa_L1,coeffFront);
 
 % kappa_L1 = -1:0.0001:1
+
+
 B = 10;
 C = 2;
-D = 2000;
+D = 6000;
 E = 1;
 fx_L1 = D*sin(C*  atan( B*kappa_L1 - E*(B*kappa_L1 - atan(B*kappa_L1)))  );
 

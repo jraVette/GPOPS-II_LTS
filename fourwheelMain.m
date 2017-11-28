@@ -38,7 +38,8 @@ sf          = 10;
     u = 0*ones(size(s));
     vx0 = 10;
     omega_front0 = vx0*(0.1557+1)./vehicle.tire_front.reff.meas;
-    T0 = 0.134334825483566*5000;
+%     T0 = 0.134334825483566*5000;
+    T0 = 2015;
     x0 = [vx0 omega_front0 T0];
 %     x0 = vx0;
     auxdata.vehicle = vehicle;
@@ -47,12 +48,14 @@ sf          = 10;
     auxdata.controlNames = controlNames;
     auxdata.units = units;
     auxdata.names = names;
+    
     guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
     guessDaq = calculateAlgebraicStates(guessDaq);
+
 % guessDaq = load('snapshot.mat');
 % guessDaq = guessDaq.daq;
-% getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})
-    
+
+getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})    
 stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1','torqueDemand'});
 % stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
 % stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
@@ -66,7 +69,7 @@ controlGuess            = [rowVector(u)];
 
 %Deal with bounds
 vxLb        = 0;                                                       %Original bound
-vxUb        = 100;%69.9240505593388;                                        %Original Bound
+vxUb        = 200;%69.9240505593388;                                        %Original Bound
 % vyMax       = 10;                                                      %Orignal bounds
 % rMax        = 55*myConstants.deg2rad;                                  %Orignal bound 45 deg/s
 % tLb         = 0;
@@ -105,7 +108,7 @@ gpopsOptions.specifyMeshIterationSolution = 'auto'; %Choose 'auto' for the defau
 gpopsOptions.mesh.method       = 'hp-PattersonRao';
 gpopsOptions.mesh.tolerance    = 1e-5;
 gpopsOptions.mesh.maxiterations = 5;
-nFrac = 4;
+nFrac = 10;
 gpopsOptions.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
 gpopsOptions.mesh.phase.colpoints = 3*ones(1,nFrac);
 % gpopsOptions.mesh.colpointsmin = 7;
@@ -117,7 +120,7 @@ gpopsOptions.setup.name                        = 'quadCar';
 gpopsOptions.setup.nlp.solver                  = 'ipopt';
 gpopsOptions.setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';%
 gpopsOptions.setup.derivatives.derivativelevel = 'second';
-gpopsOptions.setup.scales.method               = 'none';%'automatic-hybridUpdate';
+gpopsOptions.setup.scales.method               = 'automatic-hybridUpdate';
 gpopsOptions.setup.method                      = 'RPM-Differentiation';
 gpopsOptions.setup.displaylevel                = 2;
 
