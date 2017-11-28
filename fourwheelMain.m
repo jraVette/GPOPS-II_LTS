@@ -39,10 +39,12 @@ sf          = 10;
     vx0 = 10;
     omega_front0 = vx0*(0.1557+1)./vehicle.tire_front.reff.meas;
     omega_front0 = vx0*(0.0743023072420859+1)./vehicle.tire_front.reff.meas;
+    omega_front0 = vx0*(0.082637192584081+1)./vehicle.tire_front.reff.meas;
 %     T0 = 0.134334825483566*5000;
 %     T0 = 2015;
     T0 = 2012.4;
     T0 = 2012.55461547843;
+    T0 = 1991.12674097601;
     x0 = [vx0 omega_front0 T0];
 %     x0 = vx0;
     auxdata.vehicle = vehicle;
@@ -72,7 +74,7 @@ controlGuess            = [rowVector(u)];
 
 %Deal with bounds
 vxLb        = 0;                                                       %Original bound
-vxUb        = 200;%69.9240505593388;                                        %Original Bound
+vxUb        = 150;%69.9240505593388;                                        %Original Bound
 % vyMax       = 10;                                                      %Orignal bounds
 % rMax        = 55*myConstants.deg2rad;                                  %Orignal bound 45 deg/s
 % tLb         = 0;
