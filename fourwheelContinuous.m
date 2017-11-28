@@ -35,9 +35,9 @@ kappa_L1    = -(1 + reff_f*-omega_L1./vx);
 
 
 B = 10;
-C = 2.8;
+C = 2.75;
 D = 6000;
-E = 1;
+E = 0.965;
 fx_L1 = D*sin(C*  atan( B*kappa_L1 - E*(B*kappa_L1 - atan(B*kappa_L1)))  );
 
 

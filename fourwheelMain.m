@@ -38,8 +38,11 @@ sf          = 10;
     u = 0*ones(size(s));
     vx0 = 10;
     omega_front0 = vx0*(0.1557+1)./vehicle.tire_front.reff.meas;
+    omega_front0 = vx0*(0.0743023072420859+1)./vehicle.tire_front.reff.meas;
 %     T0 = 0.134334825483566*5000;
-    T0 = 2015;
+%     T0 = 2015;
+    T0 = 2012.4;
+    T0 = 2012.55461547843;
     x0 = [vx0 omega_front0 T0];
 %     x0 = vx0;
     auxdata.vehicle = vehicle;
@@ -245,8 +248,10 @@ daqGpops = parseGpops2toDaq(output,stateNames,...
                               indepVarName,...
                               units,...
                               names);
-daq = catstruct(daq,daqGpops);
+tempHeader = daq.header;                          
+daq = catstruct(daqGpops,daq);
 daq.gpopsSetup = setup;
+daq.header = tempHeader;
 
 %Calc algebraic states
 daq = calculateAlgebraicStates(daq);
