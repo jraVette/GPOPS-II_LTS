@@ -9,9 +9,12 @@ Jwheel              = vehicle.tire_front.wheelInertia.meas;
 Jr_f                = Jtire + Jwheel;                                      %Wheel inertia front wheel+tire                 [kg*m^2]
 reff_f              = vehicle.tire_front.reff.meas;                        %Effective rolling radius front axle            [m]  
 reff_r              = vehicle.tire_rear.reff.meas;                        %Effective rolling radius front axle            [m]  
+torqueBrakingRear   = vehicle.parameter.torqueDistBrakingRear.meas;        %Torque distrubution going to rear under braking [-] \in [0,1]
+torqueDrivingRear   = vehicle.parameter.torqueDistDrivingRear.meas;        %Torque distrubution going to rear under driving [-] \in [0,1]
+
 
 coeffFront          = vehicle.tire_front.coeff.meas;
-coeffRear          = vehicle.tire_front.coeff.meas;
+coeffRear          = vehicle.tire_front.coeff.meas; %FIX need to update
 
 %IndepVar
 s                   = input.phase.time;
@@ -29,19 +32,23 @@ u2                  = input.phase.control(:,1)*5000;
 % T_drive_L1          = input.phase.control(:,1)*5000;
 % kappa_L1          = input.phase.control(:,1);
 
-%% Torque allocation
-T_drive_L1 = T/4;
-T_drive_R1 = T/4;
-T_drive_L2 = T/4;
-T_drive_R2 = T/4;
+%% Torque allocation - Power Train (based on the work in Tremlett)
+tPlus   = 0.5+0.5*sin(atan(100*T));
+tMinus  = 0.5-0.5*sin(atan(100*T));
+kt = tPlus*torqueDrivingRear + tMinus*torqueBrakingRear;
+
+T_drive_L1 = (1-kt).*(T)/(2);
+T_drive_R1 = (1-kt).*(T)/(2);
+T_drive_L2 = (kt).*(T)/(2);% + kd*(omega_L2 - omega_R2);
+T_drive_R2 = (kt).*(T)/(2);% - kd*(omega_L2 - omega_R2);
 
 
 
 %% Dynamic System
 kappa_L1    = -(1 + reff_f*-omega_L1./vx);
 kappa_R1    = -(1 + reff_f*-omega_R1./vx);
-kappa_L2    = -(1 + reff_r*-omega_L2./vx);
-kappa_R2    = -(1 + reff_r*-omega_R2./vx);
+kappa_L2    = -(1 + reff_f*-omega_L2./vx); %fix reff
+kappa_R2    = -(1 + reff_f*-omega_R2./vx);
 
 fx_L1 = simplifiedPacejka(2000,0,kappa_L1,coeffFront); %IFIX still need coeffRear to be actual rear tire
 fx_R1 = simplifiedPacejka(2000,0,kappa_R1,coeffFront);
@@ -53,10 +60,10 @@ FX = fx_L1 + fx_R1 + fx_L2 + fx_R2;
 
 dvx_dt = FX./m;
 
-domega_L1_dt = (T_drive_L1 - reff_f*fx_L1)./Jr_f; %IFIX still need J_r
-domega_R1_dt = (T_drive_R1 - reff_f*fx_R1)./Jr_f;
-domega_L2_dt = (T_drive_L2 - reff_f*fx_L2)./Jr_f;
+domega_L2_dt = (T_drive_L2 - reff_f*fx_L2)./Jr_f; %IFIX still need J_r
 domega_R2_dt = (T_drive_R2 - reff_f*fx_R2)./Jr_f;
+domega_L1_dt = tMinus.*(T_drive_L1 - reff_f*fx_L1)/Jr_f + tPlus.*(dvx_dt/reff_f); %Algebraic when free wheeling
+domega_R1_dt = tMinus.*(T_drive_R1 - reff_f*fx_R1)/Jr_f + tPlus.*(dvx_dt/reff_f);
 
 
 phaseout.dynamics = [dvx_dt domega_L1_dt domega_R1_dt domega_L2_dt domega_R2_dt u2];
@@ -77,6 +84,11 @@ phaseout.algebraicStates.fx_L1.meas = fx_L1;
 phaseout.algebraicStates.fx_R1.meas = fx_R1;
 phaseout.algebraicStates.fx_L2.meas = fx_L2;
 phaseout.algebraicStates.fx_R2.meas = fx_R2;
+
+phaseout.algebraicStates.T_drive_L1.meas = T_drive_L1;
+phaseout.algebraicStates.T_drive_R1.meas = T_drive_R1;
+phaseout.algebraicStates.T_drive_L2.meas = T_drive_L2;
+phaseout.algebraicStates.T_drive_R2.meas = T_drive_R2;
 
 
 % disp(kappa_L1)
