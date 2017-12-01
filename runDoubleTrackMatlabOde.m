@@ -23,8 +23,8 @@ sSpan = [s(1) s(end)]; %#ok s will be an array
 
 
 
-options = odeset('MaxStep',1);
-[sSol,xSol] = ode45(@(s,x)fourwheelMatlabODE(s,x,u,sSpace,auxdata), sSpan, x0,options);
+options = odeset('MaxStep',0.1);
+[sSol,xSol] = ode15s(@(s,x)fourwheelMatlabODE(s,x,u,sSpace,auxdata), sSpan, x0,options);
 
      
 %Resample to requested input

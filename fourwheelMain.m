@@ -9,10 +9,10 @@ load(fullVehicleFile);
 
 %Names
 indepVarName = 'time';
-stateNames = { 'vx';'omegaWheel_L1';'torqueDemand'};
+stateNames = { 'vx';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand'};
 controlNames = {'u2'};
-units =      {'s';'m/s';'rad/s';'N*m';'N*m/s'};
-names = {'Time';'Vx';'Wheel Speed Left Front';'Torque Demand';'Torque Demand Rate'};
+units =      {'s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'N*m/s'};
+names = {'Time';'Vx';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Torque Demand Rate'};
 
 % indepVarName = 'time';
 % stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
@@ -37,16 +37,12 @@ sf          = 10;
     s = s0:1:sf;
     u = 0*ones(size(s));
     vx0 = 10;
-    omega_front0 = vx0*(0.1557+1)./vehicle.tire_front.reff.meas;
-    omega_front0 = vx0*(0.0743023072420859+1)./vehicle.tire_front.reff.meas;
-    omega_front0 = vx0*(0.0826371925855145+1)./vehicle.tire_front.reff.meas;
+    omega_front0 = vx0*(0.0826371924922622+1)./vehicle.tire_front.reff.meas;
+    omega_rear0 = vx0*(0.0826371924922622+1)./vehicle.tire_rear.reff.meas;
 %     T0 = 0.134334825483566*5000;
 %     T0 = 2015;
-    T0 = 2012.4;
-    T0 = 2012.55461547843;
-    T0 = 1991.12674097601;
-    T0 = 2028.34209728064;
-    x0 = [vx0 omega_front0 T0];
+    T0 = 4097.06566624625;
+    x0 = [vx0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0];
 %     x0 = vx0;
     auxdata.vehicle = vehicle;
     auxdata.indepVarName = indepVarName;
@@ -57,12 +53,13 @@ sf          = 10;
     
     guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
     guessDaq = calculateAlgebraicStates(guessDaq);
-
+    close all
+plotDaqChannelsAtEachWheelPosition('time','slipRatio',guessDaq)
 % guessDaq = load('snapshot.mat');
 % guessDaq = guessDaq.daq;
 
 getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})    
-stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1','torqueDemand'});
+stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1','omegaWheel_R1','omegaWheel_L2','omegaWheel_R2','torqueDemand'});
 % stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
 % stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
 
@@ -87,8 +84,8 @@ omegaUb     = vxUb/vehicle.tire_front.reff.meas;
 TMax        = 5000;
 TRate       = 100*1000/5000;                                                 % N*m/s
 
-bounds.lbX              = [vxLb    omegaLb   -TMax]; 
-bounds.ubX              = [vxUb    omegaUb    TMax];
+bounds.lbX              = [vxLb    omegaLb omegaLb omegaLb omegaLb   -TMax]; 
+bounds.ubX              = [vxUb    omegaUb  omegaUb omegaUb omegaUb  TMax];
 % bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
 % bounds.ubX              = [vxUb    omegaUb];%   TMax];
 % bounds.lbX              = [vxLb  ];%  -TMax]; 
@@ -99,8 +96,8 @@ bounds.ubX              = [vxUb    omegaUb    TMax];
 bounds.lbU              = [ -1];
 bounds.ubU              = [ 1];
 
-bounds.pathLower        = -0.2;
-bounds.pathUpper        = 0.2;
+bounds.pathLower        = [-0.2*ones(1,4)];
+bounds.pathUpper        = [ 0.2*ones(1,4)];
 auxdata.bounds = bounds;
 % bounds.phase.integral.lower     = -1e6;
 % bounds.phase.integral.upper     = 1e6;
