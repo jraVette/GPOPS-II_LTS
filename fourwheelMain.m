@@ -8,11 +8,11 @@ fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
 load(fullVehicleFile);
 
 %Names
-indepVarName = 'time';
-stateNames = { 'vx';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand'};
-controlNames = {'u2'};
-units =      {'s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'N*m/s'};
-names = {'Time';'Vx';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Torque Demand Rate'};
+gpopsNames.indepVarName = 'time';
+gpopsNames.stateNames = { 'vx';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand'};
+gpopsNames.controlNames = {'u2'};
+gpopsNames.units =      {'s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'N*m/s'};
+gpopsNames.names = {'Time';'Vx';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Torque Demand Rate'};
 
 % indepVarName = 'time';
 % stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
@@ -31,35 +31,33 @@ s0          = 0;                                             %[m] s
 sf          = 10;
 
 %% Guess
-%U Guess
-    s0          = 0;                                             %[m] s
-    sf          = 10;
-    s = s0:1:sf;
-    u = 0*ones(size(s));
-    vx0 = 10;
-    omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
-    omega_rear0 = vx0*(0.0826371924922622+1)./vehicle.tire_front.reff.meas; %fix
-%     T0 = 0.134334825483566*5000;
-%     T0 = 2015;
-    T0 = 4102.06566624625;
-    x0 = [vx0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0];
-%     x0 = vx0;
-    auxdata.vehicle = vehicle;
-    auxdata.indepVarName = indepVarName;
-    auxdata.stateNames = stateNames;
-    auxdata.controlNames = controlNames;
-    auxdata.units = units;
-    auxdata.names = names;
-    
-    guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
-    guessDaq = calculateAlgebraicStates(guessDaq);
-    close all
+s0          = 0;      %[m] s
+sf          = 10;
+s = s0:1:sf;
+u = 0*ones(size(s));
+vx0 = 10;
+omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
+omega_rear0 = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; %fix
+T0 = 4098.86791198957;
+x0 = [vx0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0];
+auxdata.vehicle = vehicle;
+auxdata.indepVarName = gpopsNames.indepVarName;
+auxdata.stateNames = gpopsNames.stateNames;
+auxdata.controlNames = gpopsNames.controlNames;
+auxdata.units = gpopsNames.units;
+auxdata.names = gpopsNames.names;
+
+guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
+guessDaq = calculateAlgebraicStates(guessDaq);
+close all
 plotDaqChannelsAtEachWheelPosition('time','slipRatio',guessDaq)
+getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})    
+stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1','omegaWheel_R1','omegaWheel_L2','omegaWheel_R2','torqueDemand'});
+
+
 % guessDaq = load('snapshot.mat');
 % guessDaq = guessDaq.daq;
 
-getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})    
-stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1','omegaWheel_R1','omegaWheel_L2','omegaWheel_R2','torqueDemand'});
 % stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
 % stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
 
@@ -71,28 +69,20 @@ controlGuess            = [rowVector(u)];
 
 
 %Deal with bounds
-vxLb        = 0;                                                       %Original bound
-vxUb        = 150;%69.9240505593388;                                        %Original Bound
-% vyMax       = 10;                                                      %Orignal bounds
-% rMax        = 55*myConstants.deg2rad;                                  %Orignal bound 45 deg/s
+vxLb        = 0;                                                           %Original bound
+vxUb        = 150;%69.9240505593388;                                       %Original Bound
+% vyMax       = 10;                                                        %Orignal bounds
+% rMax        = 55*myConstants.deg2rad;                                    %Orignal bound 45 deg/s
 % tLb         = 0;
-% tUb         = 15;%4.609395789295020;                                       %Oringal bounds
-omegaLb     = vxLb/vehicle.tire_front.reff.meas;
+% tUb         = 15;%4.609395789295020;                                     %Oringal bounds
+omegaLb     = vxLb/vehicle.tire_front.reff.meas;                           %Just using the reff of the front should be sufficient
 omegaUb     = vxUb/vehicle.tire_front.reff.meas;
-% omegaLb = -1e5;
-% omegaUb = 1e5;
 TMax        = 5000;
 TRate       = 100*1000/5000;                                                 % N*m/s
 
 bounds.lbX              = [vxLb    omegaLb omegaLb omegaLb omegaLb   -TMax]; 
 bounds.ubX              = [vxUb    omegaUb  omegaUb omegaUb omegaUb  TMax];
-% bounds.lbX              = [vxLb    omegaLb];%  -TMax]; 
-% bounds.ubX              = [vxUb    omegaUb];%   TMax];
-% bounds.lbX              = [vxLb  ];%  -TMax]; 
-% bounds.ubX              = [vxUb  ];%   TMax];
 
-% bounds.lbU              = [ -TMax];
-% bounds.ubU              = [  TMax];
 bounds.lbU              = [ -1];
 bounds.ubU              = [ 1];
 
@@ -243,11 +233,11 @@ end
 
 %Daq the solution
                             %    vx   vy   r  t
-daqGpops = parseGpops2toDaq(output,stateNames,...
-                              controlNames,...
-                              indepVarName,...
-                              units,...
-                              names);
+daqGpops = parseGpops2toDaq(output,gpopsNames.stateNames,...
+                              gpopsNames.controlNames,...
+                              gpopsNames.indepVarName,...
+                              gpopsNames.units,...
+                              gpopsNames.names);
 tempHeader = daq.header;                          
 daq = catstruct(daqGpops,daq);
 daq.gpopsSetup = setup;
