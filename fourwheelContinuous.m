@@ -11,6 +11,7 @@ reff_front          = vehicle.tire_front.reff.meas;                        %Effe
 reff_rear           = vehicle.tire_rear.reff.meas;                        %Effective rolling radius front axle            [m]  
 torqueBrakingRear   = vehicle.parameter.torqueDistBrakingRear.meas;        %Torque distrubution going to rear under braking [-] \in [0,1]
 torqueDrivingRear   = vehicle.parameter.torqueDistDrivingRear.meas;        %Torque distrubution going to rear under driving [-] \in [0,1]
+kd                  = vehicle.parameter.differentialFrictionCoeff.meas;    %Differential friction coeff                    [N*m*s/rad]
 
 
 coeffFront          = vehicle.tire_front.coeff.meas;
@@ -29,8 +30,7 @@ T                   = input.phase.state(:,6);
 
 %Control
 u2                  = input.phase.control(:,1)*5000;
-% T_drive_L1          = input.phase.control(:,1)*5000;
-% kappa_L1          = input.phase.control(:,1);
+
 
 %% Torque allocation - Power Train (based on the work in Tremlett)
 tPlus   = 0.5+0.5*sin(atan(100*T));
@@ -39,8 +39,8 @@ kt = tPlus*torqueDrivingRear + tMinus*torqueBrakingRear;
 
 T_drive_L1 = (1-kt).*(T)/(2);
 T_drive_R1 = (1-kt).*(T)/(2);
-T_drive_L2 = (kt).*(T)/(2);% + kd*(omega_L2 - omega_R2);
-T_drive_R2 = (kt).*(T)/(2);% - kd*(omega_L2 - omega_R2);
+T_drive_L2 = (kt).*(T)/(2) + kd*(omega_L2 - omega_R2);
+T_drive_R2 = (kt).*(T)/(2) - kd*(omega_L2 - omega_R2);
 
 
 
@@ -67,8 +67,7 @@ domega_R1_dt = tMinus.*(T_drive_R1 - reff_rear*fx_R1)/Jr_f + tPlus.*(dvx_dt/reff
 
 
 phaseout.dynamics = [dvx_dt domega_L1_dt domega_R1_dt domega_L2_dt domega_R2_dt u2];
-% phaseout.dynamics = [dvx_dt ];
-% phaseout.integrand = u2.^2;
+
 phaseout.path = [kappa_L1,...
                  kappa_R1,...
                  kappa_L2,...
@@ -91,4 +90,3 @@ phaseout.algebraicStates.T_drive_L2.meas = T_drive_L2;
 phaseout.algebraicStates.T_drive_R2.meas = T_drive_R2;
 
 
-% disp(kappa_L1)
