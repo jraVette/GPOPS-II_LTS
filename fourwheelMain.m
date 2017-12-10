@@ -92,8 +92,8 @@ bounds.ubU              = [ 1];
 bounds.pathLower        = [-0.2*ones(1,4)];
 bounds.pathUpper        = [ 0.2*ones(1,4)];
 auxdata.bounds = bounds;
-% bounds.phase.integral.lower     = -1e6;
-% bounds.phase.integral.upper     = 1e6;
+bounds.phase.integral.lower     = -1e2;
+bounds.phase.integral.upper     =  1e2;
 % clear ePsiMax eyMax vxLb vxUb myMax rMax tLb tUb omegaLb omegaUb  TMax  TRate DAQ
 
 
@@ -164,7 +164,7 @@ bounds.phase.path.upper         = bounds.pathUpper;
 guess.phase.time    = timeGuess; 
 guess.phase.state   = stateGuess;
 guess.phase.control = controlGuess;
-% guess.phase.integral = trapz(timeGuess,1./stateGuess(:,1));
+guess.phase.integral = 0;
 
 
 

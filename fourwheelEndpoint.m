@@ -5,7 +5,7 @@ function output = fourwheelEndpoint(input)
 % cost = input.auxdata.cost;
 % %Objective
 
-output.objective = -input.phase(1).finalstate(1) ;%+ 10*input.phase(1).integral;
+output.objective = -input.phase(1).finalstate(1) + input.phase(1).integral;
 
 end
 %-------------------------------------------%
