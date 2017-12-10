@@ -9,10 +9,10 @@ load(fullVehicleFile);
 
 %Names
 gpopsNames.indepVarName = 'time';
-gpopsNames.stateNames = { 'vx';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand'};
+gpopsNames.stateNames = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand'};
 gpopsNames.controlNames = {'u2'};
-gpopsNames.units =      {'s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'N*m/s'};
-gpopsNames.names = {'Time';'Vx';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Torque Demand Rate'};
+gpopsNames.units =      {'s';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'N*m/s'};
+gpopsNames.names = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Torque Demand Rate'};
 
 % indepVarName = 'time';
 % stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
@@ -35,11 +35,17 @@ s0          = 0;      %[m] s
 sf          = 10;
 s = s0:1:sf;
 u = 0*ones(size(s));
+
 vx0 = 10;
+vy0 = 0;
+r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
 omega_rear0 = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; %fix
 T0 = 4098.86791198957;
-x0 = [vx0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0];
+% T0 = 4098.86791122931;
+
+x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0];
+
 auxdata.vehicle = vehicle;
 auxdata.indepVarName = gpopsNames.indepVarName;
 auxdata.stateNames = gpopsNames.stateNames;
@@ -52,18 +58,15 @@ guessDaq = calculateAlgebraicStates(guessDaq);
 close all
 plotDaqChannelsAtEachWheelPosition('time','slipRatio',guessDaq)
 getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})    
-stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1','omegaWheel_R1','omegaWheel_L2','omegaWheel_R2','torqueDemand'});
-
 
 % guessDaq = load('snapshot.mat');
 % guessDaq = guessDaq.daq;
 
-% stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx','omegaWheel_L1'});%,'torqueDemand'});
-% stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',{'vx'});%,'torqueDemand'});
-
-timeGuess               = [rowVector(s)];   
+timeGuess  = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.indepVarName);
+stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.stateNames);
+controlGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.controlNames);
 x0                      = stateGuess(1,:);
-controlGuess            = [rowVector(u)];
+
 
 
 
@@ -71,8 +74,8 @@ controlGuess            = [rowVector(u)];
 %Deal with bounds
 vxLb        = 0;                                                           %Original bound
 vxUb        = 150;%69.9240505593388;                                       %Original Bound
-% vyMax       = 10;                                                        %Orignal bounds
-% rMax        = 55*myConstants.deg2rad;                                    %Orignal bound 45 deg/s
+vyMax       = 10;                                                        %Orignal bounds
+rMax        = 55*myConstants.deg2rad;                                    %Orignal bound 45 deg/s
 % tLb         = 0;
 % tUb         = 15;%4.609395789295020;                                     %Oringal bounds
 omegaLb     = vxLb/vehicle.tire_front.reff.meas;                           %Just using the reff of the front should be sufficient
@@ -80,8 +83,8 @@ omegaUb     = vxUb/vehicle.tire_front.reff.meas;
 TMax        = 5000;
 TRate       = 100*1000/5000;                                                 % N*m/s
 
-bounds.lbX              = [vxLb    omegaLb omegaLb omegaLb omegaLb   -TMax]; 
-bounds.ubX              = [vxUb    omegaUb  omegaUb omegaUb omegaUb  TMax];
+bounds.lbX              = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax]; 
+bounds.ubX              = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax];
 
 bounds.lbU              = [ -1];
 bounds.ubU              = [ 1];
@@ -99,11 +102,11 @@ gpopsOptions.repeatNonConvergentMpcSolNTimes = 1;
 gpopsOptions.specifyMeshIterationSolution = 'auto'; %Choose 'auto' for the default or an integer for the mesh number
 
 gpopsOptions.mesh.method       = 'hp-PattersonRao';
-gpopsOptions.mesh.tolerance    = 1e-5;
+gpopsOptions.mesh.tolerance    = 1e-3;
 gpopsOptions.mesh.maxiterations = 5;
-nFrac = 10;
+nFrac = 5;
 gpopsOptions.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
-gpopsOptions.mesh.phase.colpoints = 3*ones(1,nFrac);
+gpopsOptions.mesh.phase.colpoints = 4*ones(1,nFrac);
 % gpopsOptions.mesh.colpointsmin = 7;
 % gpopsOptions.mesh.colpointsmax = 20;
 
@@ -115,6 +118,7 @@ gpopsOptions.setup.derivatives.supplier        = 'adigator';%'adigator';%'sparse
 gpopsOptions.setup.derivatives.derivativelevel = 'second';
 gpopsOptions.setup.scales.method               = 'automatic-hybridUpdate';
 gpopsOptions.setup.method                      = 'RPM-Differentiation';
+% gpopsOption.setup.method                       = 'RPM-Integration';
 gpopsOptions.setup.displaylevel                = 2;
 
 
@@ -187,6 +191,7 @@ setup.auxdata                     = auxdata;
 setup.bounds                      = bounds;
 setup.guess                       = guess;
 setup.mesh                        = mesh; 
+setup.nlp.ipoptoptions.maxiterations = 1000;
 
 %% Adigator links:
 % if strcmp(linkAdigatorFiles,'manual')
