@@ -9,10 +9,10 @@ load(fullVehicleFile);
 
 %Names
 gpopsNames.indepVarName = 'time';
-gpopsNames.stateNames = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand'};
+gpopsNames.stateNames = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand';'ey';'ePsi'};
 gpopsNames.controlNames = {'u2'};
-gpopsNames.units =      {'s';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'N*m/s'};
-gpopsNames.names = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Torque Demand Rate'};
+gpopsNames.units =      {'s';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'N*m/s'};
+gpopsNames.names = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Lateral Deviation';'Heading Deviation';'Torque Demand Rate'};
 
 % indepVarName = 'time';
 % stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
@@ -40,11 +40,13 @@ vx0 = 10;
 vy0 = 0;
 r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
-omega_rear0 = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; %fix
+omega_rear0  = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; 
 T0 = 4098.86791198957;
 % T0 = 4098.86791122931;
+ey0 = 0;
+ePsi0 = 0;
 
-x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0];
+x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0];
 
 auxdata.vehicle = vehicle;
 auxdata.indepVarName = gpopsNames.indepVarName;
@@ -82,12 +84,15 @@ omegaLb     = vxLb/vehicle.tire_front.reff.meas;                           %Just
 omegaUb     = vxUb/vehicle.tire_front.reff.meas;
 TMax        = 5000;
 TRate       = 100*1000/5000;                                                 % N*m/s
+eyMax       = 5;                                                       %Road width constraint
+ePsiMax     = 25*myConstants.deg2rad;                                  %Pevious solutions said this was bounded by [-25, 25]
+    
 
-bounds.lbX              = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax]; 
-bounds.ubX              = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax];
+bounds.lbX              = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax]; 
+bounds.ubX              = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax];
 
 bounds.lbU              = [ -1];
-bounds.ubU              = [ 1];
+bounds.ubU              = [  1];
 
 bounds.pathLower        = [-0.2*ones(1,4)];
 bounds.pathUpper        = [ 0.2*ones(1,4)];

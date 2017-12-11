@@ -22,6 +22,13 @@ kd                  = vehicle.parameter.differentialFrictionCoeff.meas;    %Diff
 coeffFront          = vehicle.tire_front.coeff.meas;
 coeffRear           = vehicle.tire_rear.coeff.meas; %STOPPED HERE
 
+%% Constants that should be overridden
+fz = 2000;
+delta = 0;
+Fax = 0;
+k = 0;
+
+
 %IndepVar
 s                   = input.phase.time;
 
@@ -34,6 +41,8 @@ omega_R1            = input.phase.state(:,5);
 omega_L2            = input.phase.state(:,6);
 omega_R2            = input.phase.state(:,7);
 T                   = input.phase.state(:,8);
+ey                  = input.phase.state(:,9);
+ePsi                = input.phase.state(:,10);
 
 %Control
 u2                  = input.phase.control(:,1)*5000;
@@ -49,18 +58,14 @@ T_drive_R1 = (1-kt).*(T)/(2);
 T_drive_L2 = (kt).*(T)/(2) + kd*(omega_L2 - omega_R2);
 T_drive_R2 = (kt).*(T)/(2) - kd*(omega_L2 - omega_R2);
 
-%% Constants that should be overridden
-fz = 2000;
-delta = 0;
-Fax = 0;
 
 
 
 %% Slip angle and ratios
-kappa_L1    = -(1 + reff_front*-omega_L1./vx);
+kappa_L1    = -(1 + reff_front*-omega_L1./vx); %Note negative on slip ratio required because slip ratio defined like SAE to match Limebeer
 kappa_R1    = -(1 + reff_front*-omega_R1./vx);
-kappa_L2    = -(1 + reff_rear*-omega_L2./vx); %fix reff
-kappa_R2    = -(1 + reff_rear*-omega_R2./vx);
+kappa_L2    = -(1 + reff_rear* -omega_L2./vx); 
+kappa_R2    = -(1 + reff_rear* -omega_R2./vx);
 
 [fx_L1, fy_L1] = simplifiedPacejka(fz,0,kappa_L1,coeffFront); %IFIX still need coeffRear to be actual rear tire
 [fx_R1, fy_R1] = simplifiedPacejka(fz,0,kappa_R1,coeffFront);
@@ -80,8 +85,6 @@ dr_dt = (a*(cos(delta).*(fy_R1 + fy_L1) + sin(delta).*(fx_R1 + fx_L1)) + ...
          wf*(fx_L1.*cos(delta) - fy_L1.*sin(delta))  + wr*fx_L2 - b*(fy_R2 + fy_L2))/Izz;
 
 
-
-
 %Wheel dynamics
 domega_L2_dt = (T_drive_L2 - reff_front*fx_L2)./Jr_f; %IFIX still need J_r
 domega_R2_dt = (T_drive_R2 - reff_front*fx_R2)./Jr_f;
@@ -89,8 +92,28 @@ domega_L1_dt = tMinus.*(T_drive_L1 - reff_rear*fx_L1)/Jr_f + tPlus.*(dvx_dt/reff
 domega_R1_dt = tMinus.*(T_drive_R1 - reff_rear*fx_R1)/Jr_f + tPlus.*(dvx_dt/reff_front);
 
 
-phaseout.dynamics = [dvx_dt dvy_dt dr_dt domega_L1_dt domega_R1_dt domega_L2_dt domega_R2_dt u2];
+% road dynamics dynamics
+sDot = (vx.*cos(ePsi) - vy.*sin(ePsi))./(1-ey.*k);
+dePsi_dt = r - k.*sDot;
+dey_dt   = vx.*sin(ePsi) + vy.*cos(ePsi);
+
+
+
+%% Outputs:
+phaseout.dynamics = [dvx_dt,...
+                     dvy_dt,...
+                     dr_dt,...
+                     domega_L1_dt,...
+                     domega_R1_dt,...
+                     domega_L2_dt,...
+                     domega_R2_dt u2,...
+                     dey_dt,...
+                     dePsi_dt];
+                 
+                 
 phaseout.integrand = 0.001*u2.^2;
+
+
 phaseout.path = [kappa_L1,...
                  kappa_R1,...
                  kappa_L2,...
