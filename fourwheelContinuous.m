@@ -111,7 +111,7 @@ phaseout.dynamics = [dvx_dt,...
                      dePsi_dt];
                  
                  
-phaseout.integrand = 0.001*u2.^2;
+phaseout.integrand = u2.^2;
 
 
 phaseout.path = [kappa_L1,...

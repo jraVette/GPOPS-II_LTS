@@ -32,22 +32,26 @@ sf          = 10;
 
 %% Guess
 s0          = 0;      %[m] s
-sf          = 10;
-s = s0:1:sf;
+sf          = 2;
+s = s0:0.1:sf;
 u = 0*ones(size(s));
+% u(1:8) = 1;
 
 vx0 = 10;
 vy0 = 0;
 r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
 omega_rear0  = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; 
+% omega_rear0  = vx0./vehicle.tire_rear.reff.meas; 
 T0 = 4098.86791198957;
-% T0 = 4098.86791122931;
+T0 = 4098.86791122931;
+% T0 = 0;
 ey0 = 0;
 ePsi0 = 0;
 
 x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0];
 
+auxdata.controlWeight = 1e-3;
 auxdata.vehicle = vehicle;
 auxdata.indepVarName = gpopsNames.indepVarName;
 auxdata.stateNames = gpopsNames.stateNames;
@@ -64,10 +68,10 @@ getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})
 % guessDaq = load('snapshot.mat');
 % guessDaq = guessDaq.daq;
 
-timeGuess  = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.indepVarName);
-stateGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.stateNames);
+timeGuess    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.indepVarName);
+stateGuess   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.stateNames);
 controlGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.controlNames);
-x0                      = stateGuess(1,:);
+x0           = stateGuess(1,:);
 
 
 
@@ -97,8 +101,8 @@ bounds.ubU              = [  1];
 bounds.pathLower        = [-0.2*ones(1,4)];
 bounds.pathUpper        = [ 0.2*ones(1,4)];
 auxdata.bounds = bounds;
-bounds.phase.integral.lower     = -1e2;
-bounds.phase.integral.upper     =  1e2;
+bounds.phase.integral.lower     =  0;
+bounds.phase.integral.upper     =  1e9;
 % clear ePsiMax eyMax vxLb vxUb myMax rMax tLb tUb omegaLb omegaUb  TMax  TRate DAQ
 
 
@@ -109,7 +113,7 @@ gpopsOptions.specifyMeshIterationSolution = 'auto'; %Choose 'auto' for the defau
 gpopsOptions.mesh.method       = 'hp-PattersonRao';
 gpopsOptions.mesh.tolerance    = 1e-3;
 gpopsOptions.mesh.maxiterations = 5;
-nFrac = 5;
+nFrac = 10;
 gpopsOptions.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
 gpopsOptions.mesh.phase.colpoints = 4*ones(1,nFrac);
 % gpopsOptions.mesh.colpointsmin = 7;
@@ -123,7 +127,7 @@ gpopsOptions.setup.derivatives.supplier        = 'adigator';%'adigator';%'sparse
 gpopsOptions.setup.derivatives.derivativelevel = 'second';
 gpopsOptions.setup.scales.method               = 'automatic-hybridUpdate';
 gpopsOptions.setup.method                      = 'RPM-Differentiation';
-% gpopsOption.setup.method                       = 'RPM-Integration';
+% gpopsOptions.setup.method                       = 'RPM-Integration';
 gpopsOptions.setup.displaylevel                = 2;
 
 
