@@ -1,3 +1,7 @@
+%I think i'll have to go back to 2s of sim time not 10 becuase that thre it
+%off a lot.
+
+
 
 %Load Vehicle 
 vehicleDirectory = fullfile(jatecPath,'Resources/In house code/Vehicle Parameters/');
@@ -28,11 +32,9 @@ gpopsNames.names = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel 
 
 %Initalizaiton
 s0          = 0;                                             %[m] s
-sf          = 10;
+sf          = 7;
 
 %% Guess
-s0          = 0;      %[m] s
-sf          = 2;
 s = s0:0.1:sf;
 u = 0*ones(size(s));
 % u(1:8) = 1;
@@ -41,10 +43,12 @@ vx0 = 10;
 vy0 = 0;
 r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
-omega_rear0  = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; 
+% omega_rear0  = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; 
+omega_rear0  = vx0*(0.0778082720431494+1)./vehicle.tire_rear.reff.meas; 
 % omega_rear0  = vx0./vehicle.tire_rear.reff.meas; 
-T0 = 4098.86791198957;
-T0 = 4098.86791122931;
+% T0 = 4098.86791198957;
+% T0 = 4098.86791122931;
+T0 = 4102.69358677398;
 % T0 = 0;
 ey0 = 0;
 ePsi0 = 0;

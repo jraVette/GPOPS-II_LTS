@@ -12,6 +12,8 @@ wr                  = vehicle.parameter.trackWidth_rear.meas/2;            %1/2 
 Jtire               = vehicle.tire_front.tireInertia.meas;     
 Jwheel              = vehicle.tire_front.wheelInertia.meas;
 Jr_f                = Jtire + Jwheel;                                      %Wheel inertia front wheel+tire                 [kg*m^2]
+Jwheel              = vehicle.tire_rear.wheelInertia.meas;
+Jr_r                = Jtire + Jwheel;  
 reff_front          = vehicle.tire_front.reff.meas;                        %Effective rolling radius front axle            [m]  
 reff_rear           = vehicle.tire_rear.reff.meas;                        %Effective rolling radius front axle            [m]  
 torqueBrakingRear   = vehicle.parameter.torqueDistBrakingRear.meas;        %Torque distrubution going to rear under braking [-] \in [0,1]
@@ -20,7 +22,7 @@ kd                  = vehicle.parameter.differentialFrictionCoeff.meas;    %Diff
 
 
 coeffFront          = vehicle.tire_front.coeff.meas;
-coeffRear           = vehicle.tire_rear.coeff.meas; %STOPPED HERE
+coeffRear           = vehicle.tire_rear.coeff.meas; 
 
 %% Constants that should be overridden
 fz = 2000;
@@ -67,7 +69,7 @@ kappa_R1    = -(1 + reff_front*-omega_R1./vx);
 kappa_L2    = -(1 + reff_rear* -omega_L2./vx); 
 kappa_R2    = -(1 + reff_rear* -omega_R2./vx);
 
-[fx_L1, fy_L1] = simplifiedPacejka(fz,0,kappa_L1,coeffFront); %IFIX still need coeffRear to be actual rear tire
+[fx_L1, fy_L1] = simplifiedPacejka(fz,0,kappa_L1,coeffFront); 
 [fx_R1, fy_R1] = simplifiedPacejka(fz,0,kappa_R1,coeffFront);
 [fx_L2, fy_L2] = simplifiedPacejka(fz,0,kappa_L2,coeffRear);
 [fx_R2, fy_R2] = simplifiedPacejka(fz,0,kappa_R2,coeffRear);
@@ -86,8 +88,9 @@ dr_dt = (a*(cos(delta).*(fy_R1 + fy_L1) + sin(delta).*(fx_R1 + fx_L1)) + ...
 
 
 %Wheel dynamics
-domega_L2_dt = (T_drive_L2 - reff_front*fx_L2)./Jr_f; %IFIX still need J_r
-domega_R2_dt = (T_drive_R2 - reff_front*fx_R2)./Jr_f;
+domega_L2_dt = (T_drive_L2 - reff_front*fx_L2)./Jr_r; 
+domega_R2_dt = (T_drive_R2 - reff_front*fx_R2)./Jr_r;
+
 domega_L1_dt = tMinus.*(T_drive_L1 - reff_rear*fx_L1)/Jr_f + tPlus.*(dvx_dt/reff_front); %Algebraic when free wheeling
 domega_R1_dt = tMinus.*(T_drive_R1 - reff_rear*fx_R1)/Jr_f + tPlus.*(dvx_dt/reff_front);
 
