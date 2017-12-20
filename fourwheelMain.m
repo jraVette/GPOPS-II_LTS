@@ -4,19 +4,19 @@
 
 
 %Load Vehicle 
-vehicleDirectory = fullfile(jatecPath,'Resources/In house code/Vehicle Parameters/');
-carFilename = '2015_Corvette_C7R.mat';
-fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
+% vehicleDirectory = fullfile(jatecPath,'Resources/In house code/Vehicle Parameters/');
+% carFilename = '2015_Corvette_C7R.mat';
+% fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
 % carFileName = 'LimebeerF1Car.mat';
 % fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
-load(fullVehicleFile);
+% load(fullVehicleFile);
 
 %Names
-gpopsNames.indepVarName = 'time';
-gpopsNames.stateNames = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand';'ey';'ePsi'};
-gpopsNames.controlNames = {'u2'};
-gpopsNames.units =      {'s';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'N*m/s'};
-gpopsNames.names = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Lateral Deviation';'Heading Deviation';'Torque Demand Rate'};
+% gpopsNames.indepVarName = 'time';
+% gpopsNames.stateNames = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand';'ey';'ePsi'};
+% gpopsNames.controlNames = {'u2'};
+% gpopsNames.units =      {'s';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'N*m/s'};
+% gpopsNames.names = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Lateral Deviation';'Heading Deviation';'Torque Demand Rate'};
 
 % indepVarName = 'time';
 % stateNames = { 'vx';'omegaWheel_L1'};%,'torqueDemand'};
@@ -31,180 +31,180 @@ gpopsNames.names = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel 
 
 
 %Initalizaiton
-s0          = 0;                                             %[m] s
-sf          = 7;
+% s0          = 0;                                             %[m] s
+% sf          = 7;
 
 %% Guess
-s = s0:0.1:sf;
-u = 0*ones(size(s));
+% s = s0:0.1:sf;
+% u = 0*ones(size(s));
 % u(1:8) = 1;
 
-vx0 = 10;
-vy0 = 0;
-r0  = 0;
-omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
-% omega_rear0  = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; 
-omega_rear0  = vx0*(0.0778082720431494+1)./vehicle.tire_rear.reff.meas; 
-% omega_rear0  = vx0./vehicle.tire_rear.reff.meas; 
-% T0 = 4098.86791198957;
-% T0 = 4098.86791122931;
-T0 = 4102.69358677398;
-% T0 = 0;
-ey0 = 0;
-ePsi0 = 0;
-
-x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0];
-
-auxdata.controlWeight = 1e-3;
-auxdata.vehicle = vehicle;
-auxdata.indepVarName = gpopsNames.indepVarName;
-auxdata.stateNames = gpopsNames.stateNames;
-auxdata.controlNames = gpopsNames.controlNames;
-auxdata.units = gpopsNames.units;
-auxdata.names = gpopsNames.names;
-
-guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
-guessDaq = calculateAlgebraicStates(guessDaq);
-close all
-plotDaqChannelsAtEachWheelPosition('time','slipRatio',guessDaq)
-getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})    
+% vx0 = 10;
+% vy0 = 0;
+% r0  = 0;
+% omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
+% % omega_rear0  = vx0*(0.0826371925917944+1)./vehicle.tire_rear.reff.meas; 
+% omega_rear0  = vx0*(0.0778082720431494+1)./vehicle.tire_rear.reff.meas; 
+% % omega_rear0  = vx0./vehicle.tire_rear.reff.meas; 
+% % T0 = 4098.86791198957;
+% % T0 = 4098.86791122931;
+% T0 = 4102.69358677398;
+% % T0 = 0;
+% ey0 = 0;
+% ePsi0 = 0;
+% 
+% x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0];
+% 
+% auxdata.controlWeight = 1e-3;
+% auxdata.vehicle = vehicle;
+% auxdata.indepVarName = gpopsNames.indepVarName;
+% auxdata.stateNames = gpopsNames.stateNames;
+% auxdata.controlNames = gpopsNames.controlNames;
+% auxdata.units = gpopsNames.units;
+% auxdata.names = gpopsNames.names;
+% 
+% guessDaq = runDoubleTrackMatlabOde(s,x0,u,auxdata);
+% guessDaq = calculateAlgebraicStates(guessDaq);
+% close all
+% plotDaqChannelsAtEachWheelPosition('time','slipRatio',guessDaq)
+% getChannelDataFromDaqFile(guessDaq,{'s', 'time'; 'u', 'u2'})    
 
 % guessDaq = load('snapshot.mat');
 % guessDaq = guessDaq.daq;
 
-timeGuess    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.indepVarName);
-stateGuess   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.stateNames);
-controlGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.controlNames);
-x0           = stateGuess(1,:);
+% timeGuess    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.indepVarName);
+% stateGuess   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.stateNames);
+% controlGuess = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',gpopsNames.controlNames);
+% x0           = stateGuess(1,:);
+% 
 
 
 
 
-
-%Deal with bounds
-vxLb        = 0;                                                           %Original bound
-vxUb        = 150;%69.9240505593388;                                       %Original Bound
-vyMax       = 10;                                                        %Orignal bounds
-rMax        = 55*myConstants.deg2rad;                                    %Orignal bound 45 deg/s
-% tLb         = 0;
-% tUb         = 15;%4.609395789295020;                                     %Oringal bounds
-omegaLb     = vxLb/vehicle.tire_front.reff.meas;                           %Just using the reff of the front should be sufficient
-omegaUb     = vxUb/vehicle.tire_front.reff.meas;
-TMax        = 5000;
-TRate       = 100*1000/5000;                                                 % N*m/s
-eyMax       = 5;                                                       %Road width constraint
-ePsiMax     = 25*myConstants.deg2rad;                                  %Pevious solutions said this was bounded by [-25, 25]
-    
-
-bounds.lbX              = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax]; 
-bounds.ubX              = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax];
-
-bounds.lbU              = [ -1];
-bounds.ubU              = [  1];
-
-bounds.pathLower        = [-0.2*ones(1,4)];
-bounds.pathUpper        = [ 0.2*ones(1,4)];
-auxdata.bounds = bounds;
-bounds.phase.integral.lower     =  0;
-bounds.phase.integral.upper     =  1e9;
-% clear ePsiMax eyMax vxLb vxUb myMax rMax tLb tUb omegaLb omegaUb  TMax  TRate DAQ
-
-
-gpopsOptions.acceptableNlpOutpus = [0 1 ] ; 
-gpopsOptions.repeatNonConvergentMpcSolNTimes = 1;
-gpopsOptions.specifyMeshIterationSolution = 'auto'; %Choose 'auto' for the default or an integer for the mesh number
-
-gpopsOptions.mesh.method       = 'hp-PattersonRao';
-gpopsOptions.mesh.tolerance    = 1e-3;
-gpopsOptions.mesh.maxiterations = 5;
-nFrac = 10;
-gpopsOptions.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
-gpopsOptions.mesh.phase.colpoints = 4*ones(1,nFrac);
-% gpopsOptions.mesh.colpointsmin = 7;
-% gpopsOptions.mesh.colpointsmax = 20;
-
-gpopsOptions.setup.name                        = 'quadCar';
-% gpopsOptions.setup.functions.continuous        = @fourwheelContinuous;
-% gpopsOptions.setup.functions.endpoint          = @fourwheelEndpoint;
-gpopsOptions.setup.nlp.solver                  = 'ipopt';
-gpopsOptions.setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';%
-gpopsOptions.setup.derivatives.derivativelevel = 'second';
-gpopsOptions.setup.scales.method               = 'automatic-hybridUpdate';
-gpopsOptions.setup.method                      = 'RPM-Differentiation';
-% gpopsOptions.setup.method                       = 'RPM-Integration';
-gpopsOptions.setup.displaylevel                = 2;
+% %Deal with bounds
+% vxLb        = 0;                                                           %Original bound
+% vxUb        = 150;%69.9240505593388;                                       %Original Bound
+% vyMax       = 10;                                                        %Orignal bounds
+% rMax        = 55*myConstants.deg2rad;                                    %Orignal bound 45 deg/s
+% % tLb         = 0;
+% % tUb         = 15;%4.609395789295020;                                     %Oringal bounds
+% omegaLb     = vxLb/vehicle.tire_front.reff.meas;                           %Just using the reff of the front should be sufficient
+% omegaUb     = vxUb/vehicle.tire_front.reff.meas;
+% TMax        = 5000;
+% TRate       = 100*1000/5000;                                                 % N*m/s
+% eyMax       = 5;                                                       %Road width constraint
+% ePsiMax     = 25*myConstants.deg2rad;                                  %Pevious solutions said this was bounded by [-25, 25]
+%     
+% 
+% bounds.lbX              = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax]; 
+% bounds.ubX              = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax];
+% 
+% bounds.lbU              = [ -1];
+% bounds.ubU              = [  1];
+% 
+% bounds.pathLower        = [-0.2*ones(1,4)];
+% bounds.pathUpper        = [ 0.2*ones(1,4)];
+% auxdata.bounds = bounds;
+% bounds.phase.integral.lower     =  0;
+% bounds.phase.integral.upper     =  1e9;
+% % clear ePsiMax eyMax vxLb vxUb myMax rMax tLb tUb omegaLb omegaUb  TMax  TRate DAQ
+% 
+% 
+% gpopsOptions.acceptableNlpOutpus = [0 1 ] ; 
+% gpopsOptions.repeatNonConvergentMpcSolNTimes = 1;
+% gpopsOptions.specifyMeshIterationSolution = 'auto'; %Choose 'auto' for the default or an integer for the mesh number
+% 
+% gpopsOptions.mesh.method       = 'hp-PattersonRao';
+% gpopsOptions.mesh.tolerance    = 1e-3;
+% gpopsOptions.mesh.maxiterations = 5;
+% nFrac = 10;
+% gpopsOptions.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
+% gpopsOptions.mesh.phase.colpoints = 4*ones(1,nFrac);
+% % gpopsOptions.mesh.colpointsmin = 7;
+% % gpopsOptions.mesh.colpointsmax = 20;
+% 
+% gpopsOptions.setup.name                        = 'quadCar';
+% % gpopsOptions.setup.functions.continuous        = @fourwheelContinuous;
+% % gpopsOptions.setup.functions.endpoint          = @fourwheelEndpoint;
+% gpopsOptions.setup.nlp.solver                  = 'ipopt';
+% gpopsOptions.setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';%
+% gpopsOptions.setup.derivatives.derivativelevel = 'second';
+% gpopsOptions.setup.scales.method               = 'automatic-hybridUpdate';
+% gpopsOptions.setup.method                      = 'RPM-Differentiation';
+% % gpopsOptions.setup.method                       = 'RPM-Integration';
+% gpopsOptions.setup.displaylevel                = 2;
 
 
 
 
 
 %Set up daq
-filename = sprintf('%s_GPOPS_ShortSegStrightLine-tOpt',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
-shortFilename = 'tOpt';
-daq.header = saveVariablesAssignedToPointInStructure('exclude',{'varargin';'vehicle'},'clearVariableAfterPackage',false);
-daq.vehicle = vehicle;
-daq.header.iterNumb = 1;
-daq.header.path = pwd;
-daq.header.notes = 'Created using a GPOPS-II';
+% filename = sprintf('%s_GPOPS_ShortSegStrightLine-tOpt',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
+% shortFilename = 'tOpt';
+% daq.header = saveVariablesAssignedToPointInStructure('exclude',{'varargin';'vehicle'},'clearVariableAfterPackage',false);
+% daq.vehicle = vehicle;
+% daq.header.iterNumb = 1;
+% daq.header.path = pwd;
+% daq.header.notes = 'Created using a GPOPS-II';
 
 
 %set up Aux data
 % auxdata.track = track ;
-auxdata.vehicle = vehicle;
+% auxdata.vehicle = vehicle;
 % auxdata.cost = cost;
 %-------------------------------------------------------------------------%
 %----------------------- Setup for Problem Bounds ------------------------%
 %-------------------------------------------------------------------------%
-bounds.phase.initialtime.lower  = s0; 
-bounds.phase.initialtime.upper  = s0;
-bounds.phase.finaltime.lower    = sf; 
-bounds.phase.finaltime.upper    = sf;
-bounds.phase.initialstate.lower = x0;
-bounds.phase.initialstate.upper = x0;
-bounds.phase.state.lower        = bounds.lbX; 
-bounds.phase.state.upper        = bounds.ubX; 
-bounds.phase.finalstate.lower   = bounds.lbX; 
-bounds.phase.finalstate.upper   = bounds.ubX; 
-bounds.phase.control.lower      = bounds.lbU; 
-bounds.phase.control.upper      = bounds.ubU; 
-bounds.phase.path.lower         = bounds.pathLower;
-bounds.phase.path.upper         = bounds.pathUpper;
+% bounds.phase.initialtime.lower  = s0; 
+% bounds.phase.initialtime.upper  = s0;
+% bounds.phase.finaltime.lower    = sf; 
+% bounds.phase.finaltime.upper    = sf;
+% bounds.phase.initialstate.lower = x0;
+% bounds.phase.initialstate.upper = x0;
+% bounds.phase.state.lower        = bounds.lbX; 
+% bounds.phase.state.upper        = bounds.ubX; 
+% bounds.phase.finalstate.lower   = bounds.lbX; 
+% bounds.phase.finalstate.upper   = bounds.ubX; 
+% bounds.phase.control.lower      = bounds.lbU; 
+% bounds.phase.control.upper      = bounds.ubU; 
+% bounds.phase.path.lower         = bounds.pathLower;
+% bounds.phase.path.upper         = bounds.pathUpper;
 
 
 %-------------------------------------------------------------------------%
 %---------------------- Provide Guess of Solution ------------------------%
 %-------------------------------------------------------------------------%
-guess.phase.time    = timeGuess; 
-guess.phase.state   = stateGuess;
-guess.phase.control = controlGuess;
-guess.phase.integral = 0;
+% guess.phase.time    = timeGuess; 
+% guess.phase.state   = stateGuess;
+% guess.phase.control = controlGuess;
+% guess.phase.integral = 0;
 
 
 
 %-------------------------------------------------------------------------%
 %----------Provide Mesh Refinement Method and Initial Mesh ---------------%
 %-------------------------------------------------------------------------%
-mesh = gpopsOptions.mesh;
+% mesh = gpopsOptions.mesh;
 
 %-------------------------------------------------------------------------%
 %------------- Assemble Information into Problem Structure ---------------%        
 %-------------------------------------------------------------------------%
-setup.name                        = gpopsOptions.setup.name;
-setup.nlp.solver                  = gpopsOptions.setup.nlp.solver;
-setup.derivatives.supplier        = gpopsOptions.setup.derivatives.supplier;%'adigator';%'sparseFD'; %'adigator';%
-setup.derivatives.derivativelevel = gpopsOptions.setup.derivatives.derivativelevel;
-setup.scales.method               = gpopsOptions.setup.scales.method;
-setup.method                      = gpopsOptions.setup.method;
-setup.displaylevel                = gpopsOptions.setup.displaylevel;
-
+% setup.name                        = gpopsOptions.setup.name;
+% setup.nlp.solver                  = gpopsOptions.setup.nlp.solver;
+% setup.derivatives.supplier        = gpopsOptions.setup.derivatives.supplier;%'adigator';%'sparseFD'; %'adigator';%
+% setup.derivatives.derivativelevel = gpopsOptions.setup.derivatives.derivativelevel;
+% gpopsOptions.setup.scales.method;
+% setup.method                      = gpopsOptions.setup.method;
+% setup.displaylevel                = gpopsOptions.setup.displaylevel;
+setup = daq.header.setup;
 setup.functions.continuous        = @fourwheelContinuous;
 setup.functions.endpoint          = @fourwheelEndpoint;
 
-setup.auxdata                     = auxdata;
-setup.bounds                      = bounds;
-setup.guess                       = guess;
-setup.mesh                        = mesh; 
-setup.nlp.ipoptoptions.maxiterations = 1000;
+% setup.auxdata                     = auxdata;
+% setup.bounds                      = bounds;
+% setup.guess                       = guess;
+% setup.mesh                        = mesh; 
+% setup.nlp.ipoptoptions.maxiterations = 1000;
 
 %% Adigator links:
 % if strcmp(linkAdigatorFiles,'manual')
@@ -238,11 +238,11 @@ if ~isempty(saveSnapshotofShortSeg)
 end
 
 %Post process
-if ismember(output.result.nlpinfo,gpopsOptions.acceptableNlpOutpus)
+if ismember(output.result.nlpinfo,daq.header.acceptableNlpOutpus)
     convergence = true;
-    if ~isa(gpopsOptions.specifyMeshIterationSolution,'char')
-        output.result = output.meshhistory(gpopsOptions.specifyMeshIterationSolution).result;
-    end
+%     if ~isa(gpopsOptions.specifyMeshIterationSolution,'char')
+%         output.result = output.meshhistory(gpopsOptions.specifyMeshIterationSolution).result;
+%     end
 else
     daq = [];
     convergence = false; 
@@ -251,11 +251,11 @@ end
 
 %Daq the solution
                             %    vx   vy   r  t
-daqGpops = parseGpops2toDaq(output,gpopsNames.stateNames,...
-                              gpopsNames.controlNames,...
-                              gpopsNames.indepVarName,...
-                              gpopsNames.units,...
-                              gpopsNames.names);
+daqGpops = parseGpops2toDaq(output,daq.header.variableNames.stateNames,...
+                              daq.header.variableNames.controlNames,...
+                              daq.header.variableNames.indepVarName,...
+                              daq.header.variableNames.units,...
+                              daq.header.variableNames.names);
 tempHeader = daq.header;                          
 daq = catstruct(daqGpops,daq);
 daq.gpopsSetup = setup;
