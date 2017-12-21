@@ -1,4 +1,15 @@
-setup = daq.header.setup;
+function horizonDaq = fourwheelMain(horizonDaq)
+%This funciton will run a short segment OCP
+%
+%INPTUS:
+%   daq - structure of the horizon with all necessary GPOPS fields.
+%OUTPUTS:
+%   daq - updated strucutre with the solution
+%
+%Creation: 21 Dec 2017 - Jeff Anderson
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+setup = horizonDaq.header.setup;
 setup.functions.continuous        = @fourwheelContinuous;
 setup.functions.endpoint          = @fourwheelEndpoint;
 
@@ -25,31 +36,32 @@ if ~isempty(saveSnapshotofShortSeg)
 end
 
 %Post process
-if ismember(output.result.nlpinfo,daq.header.acceptableNlpOutpus)
+if ismember(output.result.nlpinfo,horizonDaq.header.acceptableNlpOutpus)
     convergence = true;
 %     if ~isa(gpopsOptions.specifyMeshIterationSolution,'char')
 %         output.result = output.meshhistory(gpopsOptions.specifyMeshIterationSolution).result;
 %     end
 else
-    daq = [];
+    horizonDaq = [];
     convergence = false; 
     return
 end
 
-%Daq the solution
+%horizonDaq the solution
                             %    vx   vy   r  t
-daqGpops = parseGpops2toDaq(output,daq.header.variableNames.stateNames,...
-                              daq.header.variableNames.controlNames,...
-                              daq.header.variableNames.indepVarName,...
-                              daq.header.variableNames.units,...
-                              daq.header.variableNames.names);
-tempHeader = daq.header;                          
-daq = catstruct(daqGpops,daq);
-daq.gpopsSetup = setup;
-daq.header = tempHeader;
+daqGpops = parseGpops2toDaq(output,...
+    horizonDaq.header.variableNames.stateNames,...
+    horizonDaq.header.variableNames.controlNames,...
+    horizonDaq.header.variableNames.indepVarName,...
+    horizonDaq.header.variableNames.units,...
+    horizonDaq.header.variableNames.names);
+tempHeader = horizonDaq.header;                          
+horizonDaq = catstruct(daqGpops,horizonDaq);
+horizonDaq.gpopsSetup = setup;
+horizonDaq.header = tempHeader;
 
 %Calc algebraic states
-daq = calculateAlgebraicStates(daq);
+horizonDaq = calculateAlgebraicStates(horizonDaq);
 
 
 %%Deal w/ saving file - need to resave after editing
