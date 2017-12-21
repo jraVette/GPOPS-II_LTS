@@ -11,6 +11,8 @@ load(fullVehicleFile);
 
 %% Track
 trackFilename = 'PathInfoChicaneStraightsBeforeAndAfter.mat';
+trackFilename = 'dragStrip.mat';
+
 track = load(trackFilename);
 track = track.track;
 
@@ -51,10 +53,18 @@ ePsi0 = 0;
 
 x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0];
 
+%% Auxdata
+setup.auxdata.variableNames             = variableNames;
+setup.auxdata.vehicle                   = vehicle;
+setup.auxdata.track                     = track;
+setup.auxdata.controlWeight             = 1e-3;
+
+
 %% Guess
 sGuess = (s0:interpolationAccuracy:sf)';
 uGuess = 0*ones(size(sGuess));
-guessDaq = generateGuessDaq(sGuess,x0,uGuess,vehicle,track,variableNames);
+guessDaq.header.setup = setup; %Mimic how we'll have the daq in the final form for OCP
+guessDaq = generateGuessDaq(sGuess,x0,uGuess,guessDaq);
 setup.guess.phase.time    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.indepVarName);
 setup.guess.phase.state   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.stateNames);
 setup.guess.phase.control = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.controlNames);
@@ -100,22 +110,16 @@ setup.method                      = 'RPM-Differentiation';
 setup.displaylevel                = 2;
 setup.nlp.ipoptoptions.maxiterations = 1000;
 
-setup.auxdata.variableNames             = variableNames;
-setup.auxdata.vehicle                   = vehicle;
-setup.auxdata.track                     = track;
-setup.auxdata.controlWeight             = 1e-3;
-
 setup.mesh.method       = 'hp-PattersonRao';
 setup.mesh.tolerance    = 1e-3;
 setup.mesh.maxiterations = 5;
 nFrac = 10;
 setup.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
 setup.mesh.phase.colpoints = 4*ones(1,nFrac);
-
 acceptableNlpOutpus = [0 1 ] ; 
 
 
-%Set up daq
+%% DAQ File
 filename = sprintf('%s_GPOPS_ShortSegStrightLine-tOpt',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
 shortFilename = 'tOpt';
 daq.header = saveVariablesAssignedToPointInStructure('exclude',{'varargin';'vehicle';'track'},'clearVariableAfterPackage',true);
