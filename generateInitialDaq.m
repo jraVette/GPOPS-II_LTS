@@ -24,7 +24,7 @@ variableNames.units        = {'s';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'r
 variableNames.names        = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Lateral Deviation';'Heading Deviation';'Torque Demand Rate'};
 
 %% MPC parameters
-horizon                 = 200;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
+horizon                 = 20;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
 controlHorizon          = 10;                                              %[m] MPC update %5m for chicane, updated based on course DOE
 interpolationAccuracy   = 0.25;                                            %[m] ds
 horizonDecrement        = 10;                                              %[m] used to shorten horizon incase of convergence error
@@ -38,16 +38,18 @@ horizonRefinement       = true;
 
 %% Boundary conditions
 s0 = initialDistance;
-sf = initialDistance+8;
+sf = initialDistance+horizon;
 vx0 = 10;
 vy0 = 0;
 r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
 omega_rear0  = vx0*(0.0778082720431494+1)./vehicle.tire_rear.reff.meas; 
 omega_rear0  = vx0*(0.0826575212647394+1)./vehicle.tire_rear.reff.meas; 
+omega_rear0  = vx0*(0.080+1)./vehicle.tire_rear.reff.meas; 
+
 T0 = 4102.69358677398;
-T0 = 4109.2;
-% T0 = 4109.98628238077;
+% T0 = 4109.2;
+T0 = 4110;
 ey0 = 0;
 ePsi0 = 0;
 
@@ -57,7 +59,7 @@ x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0]
 setup.auxdata.variableNames             = variableNames;
 setup.auxdata.vehicle                   = vehicle;
 setup.auxdata.track                     = track;
-setup.auxdata.controlWeight             = 1e-3;
+setup.auxdata.controlWeight             = 1e-7;%1e-3;
 
 
 %% Guess
