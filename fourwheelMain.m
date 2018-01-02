@@ -1,8 +1,12 @@
-function horizonDaq = fourwheelMain(horizonDaq)
+function [horizonDaq, convergence] = fourwheelMain(horizonDaq)
 %This funciton will run a short segment OCP
 %
 %INPTUS:
 %   daq - structure of the horizon with all necessary GPOPS fields.
+%   convergence - true/false whether the segment converged accourding to
+%       NLP output and acceptable solutions defined in 
+%       daq.header.acceptableNlpOutpus.
+%
 %OUTPUTS:
 %   daq - updated strucutre with the solution
 %
