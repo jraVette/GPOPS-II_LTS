@@ -26,5 +26,5 @@ phaseout = fourwheelContinuous(input);
 algebraicStates = fieldnames(phaseout.algebraicStates);
 for i = 1:length(algebraicStates)
     ch = algebraicStates{i};
-    daq.rawData = addMathChannelsThatAreStandardChannels(daq.rawData,ch,phaseout.algebraicStates.(ch).meas);
+    daq.rawData = addMathChannelsThatAreStandardChannels(daq.rawData,ch,phaseout.algebraicStates.(ch).meas,'suppressWarning',true);
 end
