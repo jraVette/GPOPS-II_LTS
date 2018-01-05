@@ -122,8 +122,7 @@ phaseout.path = [kappa_L1,...
                  kappa_R1,...
                  kappa_L2,...
                  kappa_R2];
-                
-
+                            
 phaseout.algebraicStates.slipRatio_L1.meas = kappa_L1;
 phaseout.algebraicStates.slipRatio_R1.meas = kappa_R1;
 phaseout.algebraicStates.slipRatio_L2.meas = kappa_L2;
@@ -141,6 +140,8 @@ phaseout.algebraicStates.fy_R2.meas = fy_R2;
 
 phaseout.algebraicStates.FX.meas = FX;
 phaseout.algebraicStates.FY.meas = FY;
+phaseout.algebraicStates.ax.meas = FX./m;
+phaseout.algebraicStates.ay.meas = FY./m;
 
 phaseout.algebraicStates.T_drive_L1.meas = T_drive_L1;
 phaseout.algebraicStates.T_drive_R1.meas = T_drive_R1;
