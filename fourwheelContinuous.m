@@ -51,9 +51,16 @@ u2                  = input.phase.control(:,1)*5000;
 
 
 %% Torque allocation - Power Train (based on the work in Tremlett)
-tPlus   = 0.5+0.5*sin(atan(100*T));
-tMinus  = 0.5-0.5*sin(atan(100*T));
-kt = tPlus*torqueDrivingRear + tMinus*torqueBrakingRear;
+% tSign = T./abs(T);
+torqueAllocationSlope  = input.auxdata.torqueAllocationSlope;
+% tPlus   = 0.5+0.5*sin(atan(torqueAllocationSlope*tSign));
+% tMinus  = 0.5-0.5*sin(atan(torqueAllocationSlope*tSign));
+% tPlus = 0.5+05*tanh(torqueAllocationSlope*T);
+% tMinus= 0.5-05*tanh(torqueAllocationSlope*T);
+tPlus  = 0.5+0.5*(T./(sqrt(T.^2 + (1/torqueAllocationSlope)^2)));
+% tMinus = 0.5-0.5*(T./(sqrt(T.^2 + (1/torqueAllocationSlope)^2)));
+
+kt = tPlus*torqueDrivingRear + (1-tPlus)*torqueBrakingRear;
 
 T_drive_L1 = (1-kt).*(T)/(2);
 T_drive_R1 = (1-kt).*(T)/(2);
@@ -91,8 +98,8 @@ dr_dt = (a*(cos(delta).*(fy_R1 + fy_L1) + sin(delta).*(fx_R1 + fx_L1)) + ...
 domega_L2_dt = (T_drive_L2 - reff_front*fx_L2)./Jr_r; 
 domega_R2_dt = (T_drive_R2 - reff_front*fx_R2)./Jr_r;
 
-domega_L1_dt = tMinus.*(T_drive_L1 - reff_rear*fx_L1)/Jr_f + tPlus.*(dvx_dt/reff_front); %Algebraic when free wheeling
-domega_R1_dt = tMinus.*(T_drive_R1 - reff_rear*fx_R1)/Jr_f + tPlus.*(dvx_dt/reff_front);
+domega_L1_dt = (1-tPlus).*(T_drive_L1 - reff_rear*fx_L1)/Jr_f + tPlus.*(dvx_dt/reff_front); %Algebraic when free wheeling
+domega_R1_dt = (1-tPlus).*(T_drive_R1 - reff_rear*fx_R1)/Jr_f + tPlus.*(dvx_dt/reff_front);
 
 
 % road dynamics dynamics
@@ -147,5 +154,13 @@ phaseout.algebraicStates.T_drive_L1.meas = T_drive_L1;
 phaseout.algebraicStates.T_drive_R1.meas = T_drive_R1;
 phaseout.algebraicStates.T_drive_L2.meas = T_drive_L2;
 phaseout.algebraicStates.T_drive_R2.meas = T_drive_R2;
+
+phaseout.algebraicStates.kt.meas = kt;
+phaseout.algebraicStates.diffTorqueTransfer.meas = kd*(omega_L2 - omega_R2);
+phaseout.algebraicStates.tPlus.meas =tPlus;
+phaseout.algebraicStates.tMinus.meas =(1-tPlus);
+
+
+
 
 
