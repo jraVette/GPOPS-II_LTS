@@ -3,10 +3,10 @@ function daq = generateInitialDaq()
 
 %% Vehicle
 vehicleDirectory = fullfile(jatecPath,'Resources/In house code/Vehicle Parameters/');
-carFilename = '2015_Corvette_C7R.mat';
-fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
-% carFileName = 'LimebeerF1Car.mat';
-% fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
+% carFilename = '2015_Corvette_C7R.mat';
+% fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
+carFileName = 'LimebeerF1Car.mat';
+fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
 load(fullVehicleFile);
 
 %% Track
@@ -17,14 +17,14 @@ track = load(trackFilename);
 track = track.track;
 
 %% Variable naming
-variableNames.indepVarName = 'time';
+variableNames.indepVarName = 'distance';
 variableNames.stateNames   = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand';'ey';'ePsi'};
 variableNames.controlNames = {'u2'};
-variableNames.units        = {'s';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'N*m/s'};
+variableNames.units        = {'m';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'N*m/s'};
 variableNames.names        = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Lateral Deviation';'Heading Deviation';'Torque Demand Rate'};
 
 %% MPC parameters
-horizon                 = 20;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
+horizon                 = 200;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
 controlHorizon          = 10;                                              %[m] MPC update %5m for chicane, updated based on course DOE
 interpolationAccuracy   = 0.25;                                            %[m] ds
 horizonDecrement        = 10;                                              %[m] used to shorten horizon incase of convergence error
@@ -43,13 +43,12 @@ vx0 = 10;
 vy0 = 0;
 r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
-omega_rear0  = vx0*(0.0778082720431494+1)./vehicle.tire_rear.reff.meas; 
-omega_rear0  = vx0*(0.0826575212647394+1)./vehicle.tire_rear.reff.meas; 
-omega_rear0  = vx0*(0.080+1)./vehicle.tire_rear.reff.meas; 
+% omega_rear0  = vx0*(0.080+1)./vehicle.tire_rear.reff.meas; 
+omega_rear0  = vx0*(1)./vehicle.tire_rear.reff.meas; 
+% T0 = 4110;
+T0 = 1000;
+% T0 = 0;
 
-T0 = 4102.69358677398;
-% T0 = 4109.2;
-T0 = 4110;
 ey0 = 0;
 ePsi0 = 0;
 
@@ -59,18 +58,28 @@ x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0]
 setup.auxdata.variableNames             = variableNames;
 setup.auxdata.vehicle                   = vehicle;
 setup.auxdata.track                     = track;
-setup.auxdata.controlWeight             = 1e-7;%1e-3;
+setup.auxdata.controlWeight             = 1e-6;%1e-3;
+setup.auxdata.torqueAllocationSlope     = 10; %used in the sin(atan(.)) to seperate plus and minus. 1 seemed to work fine
 
 
 %% Guess
-sGuess = (s0:interpolationAccuracy:sf)';
-uGuess = 0*ones(size(sGuess));
-guessDaq.header.setup = setup; %Mimic how we'll have the daq in the final form for OCP
-guessDaq = generateGuessDaq(sGuess,x0,uGuess,guessDaq);
-setup.guess.phase.time    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.indepVarName);
-setup.guess.phase.state   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.stateNames);
-setup.guess.phase.control = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.controlNames);
+% sGuess = (s0:interpolationAccuracy:sf)';
+% uGuess = 0*ones(size(sGuess));
+% guessDaq.header.setup = setup; %Mimic how we'll have the daq in the final form for OCP
+% guessDaq = generateGuessDaq(sGuess,x0,uGuess,guessDaq);
+% setup.guess.phase.time    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.indepVarName);
+% setup.guess.phase.state   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.stateNames);
+% setup.guess.phase.control = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.controlNames);
+% setup.guess.phase.integral     = 0;
+
+%Near arbitrary initial guess
+setup.guess.phase.time    = [s0; sf];
+setup.guess.phase.state   = [x0; x0];
+setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
+setup.guess.phase.control(1,1) = 0.5;
 setup.guess.phase.integral     = 0;
+
+
 
 
 %% Bounds
@@ -108,14 +117,14 @@ setup.nlp.solver                  = 'ipopt';
 setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';
 setup.derivatives.derivativelevel = 'second';
 setup.scales.method               = 'automatic-hybridUpdate';
-setup.method                      = 'RPM-Differentiation';
+setup.method                      = 'RPM-Integration';
 setup.displaylevel                = 2;
 setup.nlp.ipoptoptions.maxiterations = 1000;
 
 setup.mesh.method       = 'hp-PattersonRao';
 setup.mesh.tolerance    = 1e-3;
-setup.mesh.maxiterations = 5;
-nFrac = 10;
+setup.mesh.maxiterations = 10;
+nFrac = 4;
 setup.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
 setup.mesh.phase.colpoints = 4*ones(1,nFrac);
 acceptableNlpOutpus = [0 1 ] ; 
