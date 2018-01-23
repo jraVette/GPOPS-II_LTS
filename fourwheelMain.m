@@ -1,4 +1,4 @@
-function [horizonDaq, convergence] = fourwheelMain(horizonDaq)
+function [horizonDaq, convergence] = fourwheelMain(horizonDaq,varargin)
 %This funciton will run a short segment OCP
 %
 %INPTUS:
@@ -13,13 +13,13 @@ function [horizonDaq, convergence] = fourwheelMain(horizonDaq)
 %Creation: 21 Dec 2017 - Jeff Anderson
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+
 setup = horizonDaq.header.setup;
-setup.functions.continuous        = @fourwheelContinuous;
+
+setup.functions.continuous        = @fourwheelContinuous;                  %Unfortunately, I don't know a better way than a static link to the continuous and endpoitn functions.
 setup.functions.endpoint          = @fourwheelEndpoint;
-
-adigatorfilenames = adigatorGenFiles4gpops2(setup);
-
-setup.adigatorgrd.continuous    = @fourwheelContinuousADiGatorGrd;
+% adigatorfilenames = adigatorGenFiles4gpops2(setup);
+setup.adigatorgrd.continuous    = @fourwheelContinuousADiGatorGrd;         %Unfortunately, I don't know a better way than a static link to the adigator files.
 setup.adigatorgrd.endpoint      = @fourwheelEndpointADiGatorGrd;
 setup.adigatorhes.continuous    = @fourwheelContinuousADiGatorHes;
 setup.adigatorhes.endpoint      = @fourwheelEndpointADiGatorHes;

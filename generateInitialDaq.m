@@ -141,3 +141,10 @@ daq.header.path = pwd;
 daq.header = addNotesToDaqFile(daq.header,sprintf('File setup %s to setup for MPC LTS',datestr(now,'yyyy-mm-dd_HH_MM_SS')));
 
 
+%% Create adigator files
+setup = daq.header.setup;
+setup.functions.continuous        = @fourwheelContinuous;
+setup.functions.endpoint          = @fourwheelEndpoint;
+adigatorGenFiles4gpops2(setup);
+
+

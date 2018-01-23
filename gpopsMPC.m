@@ -155,7 +155,7 @@ end %While no checkered flag
 
 % [times, masterDaq] = calculateManeuveringTime(masterDaq);
 %Save the final solution
-snapshotFilename = sprintf('%s_MasterDaqSolution_t=%05.3f',datestr(now,'yyyy-mm-dd_HH_MM_SS',times));
+snapshotFilename = sprintf('%s_MasterDaqSolution_t',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
 daq = masterDaq;
 save(snapshotFilename,'daq');
 
