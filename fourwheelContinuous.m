@@ -122,7 +122,8 @@ phaseout.dynamics = [dvx_dt./sDot,...
                      dePsi_dt./sDot];
                  
                  
-phaseout.integrand = 1./sDot + input.auxdata.controlWeight*u2.^2;
+% phaseout.integrand = 1./sDot + input.auxdata.controlWeight*u2.^2;
+phaseout.integrand = (vx-100).^2 + vy.^2 + r.^2 + ey.^2 + ePsi.^2 + 1./sDot + input.auxdata.controlWeight*u2.^2;
 
 
 phaseout.path = [kappa_L1,...
