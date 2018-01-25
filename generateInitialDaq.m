@@ -43,10 +43,10 @@ vx0 = 10;
 vy0 = 0;
 r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
-% omega_rear0  = vx0*(0.080+1)./vehicle.tire_rear.reff.meas; 
-omega_rear0  = vx0*(1)./vehicle.tire_rear.reff.meas; 
+omega_rear0  = vx0*(0.0826371923756939+1)./vehicle.tire_rear.reff.meas; 
+% omega_rear0  = vx0*(1)./vehicle.tire_rear.reff.meas; 
 % T0 = 4110;
-T0 = 1000;
+T0 = 2393.5092066619;
 % T0 = 0;
 
 ey0 = 0;
@@ -54,12 +54,6 @@ ePsi0 = 0;
 
 x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0];
 
-%% Auxdata
-setup.auxdata.variableNames             = variableNames;
-setup.auxdata.vehicle                   = vehicle;
-setup.auxdata.track                     = track;
-setup.auxdata.controlWeight             = 1e-6;%1e-3;
-setup.auxdata.torqueAllocationSlope     = 10; %used in the sin(atan(.)) to seperate plus and minus. 1 seemed to work fine
 
 
 %% Guess
@@ -72,12 +66,19 @@ setup.auxdata.torqueAllocationSlope     = 10; %used in the sin(atan(.)) to seper
 % setup.guess.phase.control = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.controlNames);
 % setup.guess.phase.integral     = 0;
 
+%Load file
+guessFile = load('2018-01-24_11_17_25_solutionSnapshot_Horizon001.mat');
+setup.guess.phase.time = guessFile.segDaq.gpopsOutput.result.solution.phase.time;
+setup.guess.phase.state = guessFile.segDaq.gpopsOutput.result.solution.phase.state;
+setup.guess.phase.control = guessFile.segDaq.gpopsOutput.result.solution.phase.control;
+setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
+
 %Near arbitrary initial guess
-setup.guess.phase.time    = [s0; sf];
-setup.guess.phase.state   = [x0; x0];
-setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
-setup.guess.phase.control(1,1) = 0.5;
-setup.guess.phase.integral     = 0;
+% setup.guess.phase.time    = [s0; sf];
+% setup.guess.phase.state   = [x0; x0];
+% setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
+% setup.guess.phase.control(1,1) = 0.5;
+% setup.guess.phase.integral     = 0;
 
 
 
@@ -110,6 +111,22 @@ setup.bounds.phase.path.lower         = [-0.2*ones(1,4)];
 setup.bounds.phase.path.upper         = [ 0.2*ones(1,4)];
 setup.bounds.phase.integral.lower     =  0;
 setup.bounds.phase.integral.upper     =  1e9;
+
+%% Auxdata - put this here so I can use bounds
+setup.auxdata.variableNames             = variableNames;
+setup.auxdata.vehicle                   = vehicle;
+setup.auxdata.track                     = track;
+setup.auxdata.controlWeight             = 1e-6;%1e-3;
+setup.auxdata.torqueAllocationSlope     = 10; %used in the sin(atan(.)) to seperate plus and minus. 1 seemed to work fine
+vxTarget = 100;
+setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
+setup.auxdata.stageCost.scaling         = [1 1 1 1 1 1 1 1 1 1];
+setup.auxdata.stageCost.weight          = [1];
+
+setup.auxdata.terminalCost.targetState  = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
+setup.auxdata.terminalCost.scaling      = [vxTarget vyMax rMax omegaUb omegaUb omegaUb omegaUb TMax eyMax ePsiMax];
+setup.auxdata.terminalCost.weight       = 0;
+
 
 %% GPOPS Setup
 setup.name                        = 'quadCar';
