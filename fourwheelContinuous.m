@@ -120,7 +120,8 @@ phaseout.dynamics = [dvx_dt./sDot,...
                      dey_dt./sDot,...
                      dePsi_dt./sDot];              
                  
-% phaseout.integrand = 1./sDot + input.auxdata.controlWeight*u2.^2;
+% phaseout.integrand = 100*(1./sDot) + input.auxdata.controlWeight*u2.^2 + ... %worked with 100*minTime
+%                      (vx-100).^2;%;*1e-1;
 phaseout.integrand = (vx-100).^2 + vy.^2 + r.^2 + ey.^2 + ePsi.^2 + 1./sDot + input.auxdata.controlWeight*u2.^2;
 % timePenality = 1./sDot;
 % stageCost = bsxfun(@minus,input.phase.state,input.auxdata.stageCost.targetState).^2 * auxdata.stageCost.weight;

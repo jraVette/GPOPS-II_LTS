@@ -127,7 +127,7 @@ while ~checkeredFlag
 %     nextGuess.phase.integral= segDaq.gpopsOutput.result.solution.phase.integral;
     
         
-      %Based off previous horizon:
+      %Based off previous horizon: at start and end points.
     nextGuess.phase.time    = [segDaq.gpopsOutput.result.solution.phase.time; masterDaq.status.currentDistance + masterDaq.header.horizon];
     nextGuess.phase.state   = [segDaq.gpopsOutput.result.solution.phase.state; segDaq.gpopsOutput.result.solution.phase.state(end,:)];
     nextGuess.phase.control = [segDaq.gpopsOutput.result.solution.phase.control; 0];
