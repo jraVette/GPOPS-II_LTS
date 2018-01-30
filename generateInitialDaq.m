@@ -116,11 +116,12 @@ setup.bounds.phase.integral.upper     =  1e9;
 setup.auxdata.variableNames             = variableNames;
 setup.auxdata.vehicle                   = vehicle;
 setup.auxdata.track                     = track;
+setup.auxdata.minTimeCost               = 1;
 setup.auxdata.controlWeight             = 1e-6;%1e-3;
 setup.auxdata.torqueAllocationSlope     = 10; %used in the sin(atan(.)) to seperate plus and minus. 1 seemed to work fine
 vxTarget = 100;
 setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
-setup.auxdata.stageCost.scaling         = [1 1 1 1 1 1 1 1 1 1];
+setup.auxdata.stageCost.scaling         = [1        1 1 0       0       0       0       0 1 1];
 setup.auxdata.stageCost.weight          = [1];
 
 setup.auxdata.terminalCost.targetState  = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
