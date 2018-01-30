@@ -70,7 +70,7 @@ x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0]
 guessFile = load('2018-01-24_11_17_25_solutionSnapshot_Horizon001.mat');
 setup.guess.phase.time = guessFile.segDaq.gpopsOutput.result.solution.phase.time;
 setup.guess.phase.state = guessFile.segDaq.gpopsOutput.result.solution.phase.state;
-setup.guess.phase.control = guessFile.segDaq.gpopsOutput.result.solution.phase.control;
+setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control zeros(size(setup.guess.phase.time))];
 setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
 
 %Near arbitrary initial guess
@@ -94,6 +94,7 @@ TMax        = 5000;
 TRate       = 100*1000/5000;                                                 % N*m/s
 eyMax       = 5;                                                       %Road width constraint
 ePsiMax     = 25*myConstants.deg2rad;                                  %Pevious solutions said this was bounded by [-25, 25]
+deltaMax    = 45*myConstants.deg2rad;
 
 setup.bounds.phase.initialtime.lower  = s0; 
 setup.bounds.phase.initialtime.upper  = s0;
@@ -101,12 +102,12 @@ setup.bounds.phase.finaltime.lower    = sf;
 setup.bounds.phase.finaltime.upper    = sf;
 setup.bounds.phase.initialstate.lower = x0;
 setup.bounds.phase.initialstate.upper = x0;
-setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax]; 
-setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax];
+setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax -deltaMax]; 
+setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax  deltaMax];
 setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower;
 setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper;
-setup.bounds.phase.control.lower      = [ -1];
-setup.bounds.phase.control.upper      = [  1];
+setup.bounds.phase.control.lower      = [ -deltaMax -1];
+setup.bounds.phase.control.upper      = [  deltaMax  1];
 setup.bounds.phase.path.lower         = [-0.2*ones(1,4)];
 setup.bounds.phase.path.upper         = [ 0.2*ones(1,4)];
 setup.bounds.phase.integral.lower     =  0;
@@ -120,13 +121,13 @@ setup.auxdata.minTimeCost               = 1;
 setup.auxdata.controlWeight             = 1e-6;%1e-3;
 setup.auxdata.torqueAllocationSlope     = 10; %used in the sin(atan(.)) to seperate plus and minus. 1 seemed to work fine
 vxTarget = 100;
-setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
-setup.auxdata.stageCost.scaling         = [1        1 1 0       0       0       0       0 1 1];
+setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0 0];
+setup.auxdata.stageCost.scaling         = [1        1 1 0       0       0       0       0 1 1 0];
 setup.auxdata.stageCost.weight          = [1];
 
-setup.auxdata.terminalCost.targetState  = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
-setup.auxdata.terminalCost.scaling      = [vxTarget vyMax rMax omegaUb omegaUb omegaUb omegaUb TMax eyMax ePsiMax];
-setup.auxdata.terminalCost.weight       = 0;
+% setup.auxdata.terminalCost.targetState  = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
+% setup.auxdata.terminalCost.scaling      = [vxTarget vyMax rMax omegaUb omegaUb omegaUb omegaUb TMax eyMax ePsiMax];
+% setup.auxdata.terminalCost.weight       = 0;
 
 
 %% GPOPS Setup
