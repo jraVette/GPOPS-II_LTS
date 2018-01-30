@@ -28,7 +28,8 @@ coeffRear           = vehicle.tire_rear.coeff.meas;
 fz = 2000;
 delta = 0;
 Fax = 0;
-k = 0;
+% k = 0;
+
 
 
 %IndepVar
@@ -50,6 +51,10 @@ ePsi                = input.phase.state(:,10);
 
 %Control
 u2                  = input.phase.control(:,1)*5000;
+
+%% Track
+trackParameters = trackParameterInterpolation(input.auxdata.track,s);
+k = trackParameters.curvature.meas;
 
 
 %% Torque allocation - Power Train (based on the work in Tremlett)
