@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#This script will copy all non-discoverable files in JATec from the respository. I built this so I can compile w/o copying the full JATec respository in here.
+
+jatecDirectory="/Users/jeff13mbp/Dropbox/Code_Repository/MATLAB_Repository/Complete Software/JATec"
+
+cp "$jatecDirectory""/Resources/In house code/Vehicle Parameters/Optimal Control Research/LimebeerF1Car.mat" .
+cp "$jatecDirectory""/Resources/In house code/Vehicle Parameters/Corvette/2015_Corvette_C7R.mat" .
+cp "$jatecDirectory""/JATec V3/Internal Source Code/Channel Namming/channelNames.mat" .
+
+cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/HockenheimLoopedBeforeAndAfter.mat" .
+cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/NurburgringLoopedBeforeAndAfter.mat"  .
+cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/PathInfoChicaneStraightsBeforeAndAfter.mat"  .
+cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/dragStrip.mat"  .
+cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/Sebring/SebringLoopedOptFitCtrLine.mat"  .
