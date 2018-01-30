@@ -53,8 +53,9 @@ ePsi                = input.phase.state(:,10);
 u2                  = input.phase.control(:,1)*5000;
 
 %% Track
-trackParameters = trackParameterInterpolation(input.auxdata.track,s);
-k = trackParameters.curvature.meas;
+track = input.auxdata.track;
+k = interp1(track.distance.meas,track.curvature.meas,s,'spline','extrap');
+
 
 
 %% Torque allocation - Power Train (based on the work in Tremlett)
