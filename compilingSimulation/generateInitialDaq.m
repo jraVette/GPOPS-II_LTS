@@ -2,12 +2,15 @@ function daq = generateInitialDaq()
 %Moving parameters to daq file
 
 %% Vehicle
-vehicleDirectory = fullfile(jatecPath,'Resources/In house code/Vehicle Parameters/');
-% carFilename = '2015_Corvette_C7R.mat';
+% vehicleDirectory = fullfile(jatecPath,'Resources/In house code/Vehicle Parameters/');
 % fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
+% fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
+% load(fullVehicleFile);
+% carFilename = '2015_Corvette_C7R.mat';
+
+
 carFileName = 'LimebeerF1Car.mat';
-fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
-load(fullVehicleFile);
+load(carFileName);
 
 %% Track
 trackFilename = 'PathInfoChicaneStraightsBeforeAndAfter.mat';
@@ -159,10 +162,7 @@ daq.header.path = pwd;
 daq.header = addNotesToDaqFile(daq.header,sprintf('File setup %s to setup for MPC LTS',datestr(now,'yyyy-mm-dd_HH_MM_SS')));
 
 
-%% Create adigator files
-setup = daq.header.setup;
-setup.functions.continuous        = @fourwheelContinuous;
-setup.functions.endpoint          = @fourwheelEndpoint;
-adigatorGenFiles4gpops2(setup);
+
+
 
 

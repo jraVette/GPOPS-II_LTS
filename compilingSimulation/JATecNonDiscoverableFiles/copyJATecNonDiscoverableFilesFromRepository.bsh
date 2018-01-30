@@ -13,3 +13,4 @@ cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tr
 cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/PathInfoChicaneStraightsBeforeAndAfter.mat"  .
 cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/dragStrip.mat"  .
 cp "/Users/jeff13mbp/Dropbox/Jeff at Michelin/jraMATLAB/Optimal Control Codes/Tracks/Sebring/SebringLoopedOptFitCtrLine.mat"  .
+cp '/Users/jeff13mbp/Dropbox/Code_Repository/MATLAB_Repository/Complete Software/JATec/Resources/In house code/Miscellaneous Code/clearallbut.m' .
