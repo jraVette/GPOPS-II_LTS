@@ -18,10 +18,10 @@ track = track.track;
 
 %% Variable naming
 variableNames.indepVarName = 'distance';
-variableNames.stateNames   = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand';'ey';'ePsi'};
-variableNames.controlNames = {'u2'};
-variableNames.units        = {'m';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'N*m/s'};
-variableNames.names        = {'Time';'Vx';'Vy';'Yaw Rate';'Wheel Speed Left Front';'Wheel Speed Right Front';'Wheel Speed Left Rear';'Wheel Speed Right Rear';'Torque Demand';'Lateral Deviation';'Heading Deviation';'Torque Demand Rate'};
+variableNames.stateNames   = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand';'ey';'ePsi';'delta'};
+variableNames.controlNames = {'u1';'u2'};
+variableNames.units        = {'m';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'rad';'rad/s';'N*m/s'};
+variableNames.names        = {'s';'v_x';'v_y';'\dot{\psi}';'\omega_{L1}';'\omega_{R1}';'\omega_{L2}';'\omega_{R2}';'T';'e_y';'e_{\psi}';'\delta';'\dot{\delta}';'\dot{T}'};
 
 %% MPC parameters
 horizon                 = 200;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
@@ -51,8 +51,9 @@ T0 = 2393.5092066619;
 
 ey0 = 0;
 ePsi0 = 0;
+delta0 = 0;
 
-x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0];
+x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0 delta0];
 
 
 
@@ -69,7 +70,7 @@ x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0]
 %Load file
 guessFile = load('2018-01-24_11_17_25_solutionSnapshot_Horizon001.mat');
 setup.guess.phase.time = guessFile.segDaq.gpopsOutput.result.solution.phase.time;
-setup.guess.phase.state = guessFile.segDaq.gpopsOutput.result.solution.phase.state;
+setup.guess.phase.state = [guessFile.segDaq.gpopsOutput.result.solution.phase.state zeros(size(setup.guess.phase.time))];
 setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control zeros(size(setup.guess.phase.time))];
 setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
 

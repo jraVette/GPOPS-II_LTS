@@ -19,6 +19,11 @@ reff_rear           = vehicle.tire_rear.reff.meas;                        %Effec
 torqueBrakingRear   = vehicle.parameter.torqueDistBrakingRear.meas;        %Torque distrubution going to rear under braking [-] \in [0,1]
 torqueDrivingRear   = vehicle.parameter.torqueDistDrivingRear.meas;        %Torque distrubution going to rear under driving [-] \in [0,1]
 kd                  = vehicle.parameter.differentialFrictionCoeff.meas;    %Differential friction coeff                    [N*m*s/rad]
+CD                  = vehicle.parameter.coeffDrag.meas;                    %Coefficient of drag
+CL                  = vehicle.parameter.coeffLift.meas;                    %Coefficient of lift
+frontalArea         = vehicle.parameter.frontalArea.meas;                  %Frontal area                                   [m^2]
+rho                 = vehicle.parameter.airDensity.meas;                   %Air Density                                    [kg/m^3]
+a_a                 = vehicle.parameter.a_a.meas;                          %Dist to CP to front axle                       [m]
 
 
 coeffFront          = vehicle.tire_front.coeff.meas;
@@ -26,11 +31,6 @@ coeffRear           = vehicle.tire_rear.coeff.meas;
 
 %% Constants that should be overridden
 fz = 2000;
-delta = 0;
-Fax = 0;
-% k = 0;
-
-
 
 %IndepVar
 s                   = input.phase.time;
@@ -58,6 +58,10 @@ u2                  = input.phase.control(:,2)*5000;
 track = input.auxdata.track;
 k = interp1(track.distance.meas,track.curvature.meas,s,'spline','extrap');
 
+%% Aero
+%Aero loads      
+Faz =  0.5*CL*rho*frontalArea*vx.^2;
+Fax = -0.5*CD*rho*frontalArea*vx.^2;
 
 
 %% Torque allocation - Power Train (based on the work in Tremlett)
