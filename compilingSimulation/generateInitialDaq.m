@@ -164,10 +164,4 @@ daq.header.path = pwd;
 daq.header = addNotesToDaqFile(daq.header,sprintf('File setup %s to setup for MPC LTS',datestr(now,'yyyy-mm-dd_HH_MM_SS')));
 
 
-<<<<<<< HEAD
-=======
-
-
-
->>>>>>> 331c0b7fbb77cf5a71f335a6312ce87acf4fb46c
 
