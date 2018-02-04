@@ -1,4 +1,27 @@
 function phaseout = fourwheelContinuous(input)
+%% Stats and controls, scale them appropiately
+scaling = input.auxdata.scaling;
+%IndepVar
+s                   = input.phase.time./scaling.length;     
+
+%States
+vx                  = input.phase.state(:,1)./scaling.state(1);
+vy                  = input.phase.state(:,2)./scaling.state(2);
+r                   = input.phase.state(:,3)./scaling.state(3);
+omega_L1            = input.phase.state(:,4)./scaling.state(4);
+omega_R1            = input.phase.state(:,5)./scaling.state(5);
+omega_L2            = input.phase.state(:,6)./scaling.state(6);
+omega_R2            = input.phase.state(:,7)./scaling.state(7);
+T                   = input.phase.state(:,8)./scaling.state(8);
+ey                  = input.phase.state(:,9)./scaling.state(9);
+ePsi                = input.phase.state(:,10)./scaling.state(10);
+delta               = input.phase.state(:,11)./scaling.state(11);
+%IF YOU ADD STATES, expand integral 
+
+
+%Control
+u1                  = input.phase.control(:,1)./scaling.control(1);
+u2                  = input.phase.control(:,2)./scaling.control(1).*5000;
 
 
 %Parameters
@@ -32,27 +55,6 @@ coeffRear           = vehicle.tire_rear.coeff.meas;
 %% Constants that should be overridden
 fz = 2000;
 
-%IndepVar
-s                   = input.phase.time;
-
-%States
-vx                  = input.phase.state(:,1);
-vy                  = input.phase.state(:,2);
-r                   = input.phase.state(:,3);
-omega_L1            = input.phase.state(:,4);
-omega_R1            = input.phase.state(:,5);
-omega_L2            = input.phase.state(:,6);
-omega_R2            = input.phase.state(:,7);
-T                   = input.phase.state(:,8);
-ey                  = input.phase.state(:,9);
-ePsi                = input.phase.state(:,10);
-delta               = input.phase.state(:,11);
-%IF YOU ADD STATES, expand integral 
-
-
-%Control
-u1                  = input.phase.control(:,1);
-u2                  = input.phase.control(:,2)*5000;
 
 %% Track
 track = input.auxdata.track;
@@ -123,17 +125,17 @@ dey_dt   = vx.*sin(ePsi) + vy.*cos(ePsi);
 
 
 %% Outputs:
-phaseout.dynamics = [dvx_dt./sDot,...
-                     dvy_dt./sDot,...
-                     dr_dt./sDot,...
-                     domega_L1_dt./sDot,...
-                     domega_R1_dt./sDot,...
-                     domega_L2_dt./sDot,...
-                     domega_R2_dt./sDot,...
-                     u2./sDot,...
-                     dey_dt./sDot,...
-                     dePsi_dt./sDot,...
-                     u1./sDot];              
+phaseout.dynamics = [(dvx_dt./sDot).*(scaling.velocity/scaling.time/scaling.velocity),...
+                     (dvy_dt./sDot).*(scaling.velocity/scaling.time/scaling.velocity),...
+                     (dr_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_L1_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_R1_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_L2_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_R2_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (u2./sDot).*(scaling.torque/scaling.time/scaling.velocity),...
+                     (dey_dt./sDot).*(scaling.length/scaling.time/scaling.velocity),...
+                     (dePsi_dt./sDot).*(scaling.angle/scaling.time/scaling.velocity),...
+                     (u1./sDot).*(scaling.angle/scaling.time/scaling.velocity)];              
                  
 % phaseout.integrand = 100*(1./sDot) + input.auxdata.controlWeight*u2.^2 + ... %worked with 100*minTime
 %                      (vx-100).^2;%;*1e-1;
@@ -193,6 +195,4 @@ phaseout.algebraicStates.tPlus.meas =tPlus;
 phaseout.algebraicStates.tMinus.meas =(1-tPlus);
 
 
-
-
-
+phaseout.algebraicStates.unscaledStates.meas = [vx vy r omega_L1 omega_R1 omega_L2 omega_R2 T ey ePsi delta];

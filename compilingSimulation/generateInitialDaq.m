@@ -38,6 +38,19 @@ timingDistanceFinish    = track.finishDistance;
 finishDistance          = timingDistanceFinish+10;
 horizonRefinement       = true;
 
+%% Scaling
+scaling.length = 1;%1/(vehicle.parameter.a.meas+vehicle.parameter.b.meas);
+scaling.mass   = 1;%1/(vehicle.parameter.mass.meas);
+scaling.time   = 1;%sqrt(scaling.length*9.81);
+scaling.angle  = 1;
+
+scaling.velocity = scaling.length/scaling.time;
+scaling.acceleration = scaling.length/scaling.time^2;
+scaling.angularVelocity = scaling.angle/scaling.time;
+scaling.force = scaling.mass*scaling.acceleration;
+scaling.torque = scaling.force*scaling.length;
+scaling.state = [scaling.velocity scaling.velocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.torque scaling.length scaling.angle scaling.angle];
+scaling.control = [scaling.angle/scaling.time  scaling.torque/scaling.time];
 
 %% Boundary conditions
 s0 = initialDistance;
@@ -57,6 +70,7 @@ ePsi0 = 0;
 delta0 = 0;
 
 x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0 delta0];
+x0 = x0.*scaling.state;
 
 
 
@@ -76,6 +90,10 @@ setup.guess.phase.time = guessFile.segDaq.gpopsOutput.result.solution.phase.time
 setup.guess.phase.state = [guessFile.segDaq.gpopsOutput.result.solution.phase.state zeros(size(setup.guess.phase.time))];
 setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control zeros(size(setup.guess.phase.time))];
 setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
+
+setup.guess.phase.time = setup.guess.phase.time*scaling.length;
+setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
+setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.control);
 
 %Near arbitrary initial guess
 % setup.guess.phase.time    = [s0; sf];
@@ -100,18 +118,18 @@ eyMax       = 5;                                                       %Road wid
 ePsiMax     = 25*myConstants.deg2rad;                                  %Pevious solutions said this was bounded by [-25, 25]
 deltaMax    = 45*myConstants.deg2rad;
 
-setup.bounds.phase.initialtime.lower  = s0; 
-setup.bounds.phase.initialtime.upper  = s0;
-setup.bounds.phase.finaltime.lower    = sf; 
-setup.bounds.phase.finaltime.upper    = sf;
-setup.bounds.phase.initialstate.lower = x0;
-setup.bounds.phase.initialstate.upper = x0;
-setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax -deltaMax]; 
-setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax  deltaMax];
-setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower;
-setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper;
-setup.bounds.phase.control.lower      = [ -deltaMax -1];
-setup.bounds.phase.control.upper      = [  deltaMax  1];
+setup.bounds.phase.initialtime.lower  = s0*scaling.length; 
+setup.bounds.phase.initialtime.upper  = s0*scaling.length;
+setup.bounds.phase.finaltime.lower    = sf*scaling.length;
+setup.bounds.phase.finaltime.upper    = sf*scaling.length;
+setup.bounds.phase.initialstate.lower = x0.*scaling.state;
+setup.bounds.phase.initialstate.upper = x0.*scaling.state;
+setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax -deltaMax].*scaling.state; 
+setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax  deltaMax].*scaling.state;
+setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower.*scaling.state;
+setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;;
+setup.bounds.phase.control.lower      = [ -deltaMax -1].*scaling.control;
+setup.bounds.phase.control.upper      = [  deltaMax  1].*scaling.control;
 setup.bounds.phase.path.lower         = [-0.2*ones(1,4)];
 setup.bounds.phase.path.upper         = [ 0.2*ones(1,4)];
 setup.bounds.phase.integral.lower     =  0;
@@ -119,6 +137,7 @@ setup.bounds.phase.integral.upper     =  1e9;
 
 %% Auxdata - put this here so I can use bounds
 setup.auxdata.variableNames             = variableNames;
+setup.auxdata.scaling                   = scaling;
 setup.auxdata.vehicle                   = vehicle;
 setup.auxdata.track                     = track;
 setup.auxdata.minTimeCost               = 1;
