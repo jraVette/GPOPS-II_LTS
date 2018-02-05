@@ -107,7 +107,7 @@ setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.cont
 
 
 %% Bounds
-vxLb        = 0;                                                           %Original bound
+vxLb        = 5;                                                           %Original bound
 vxUb        = 150;%69.9240505593388;                                       %Original Bound
 vyMax       = 10;                                                        %Orignal bounds
 rMax        = 55*myConstants.deg2rad;                                    %Orignal bound 45 deg/s
@@ -129,8 +129,8 @@ setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omeg
 setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax  deltaMax].*scaling.state;
 setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower.*scaling.state;
 setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;
-setup.bounds.phase.control.lower      = [ -deltaMax -1].*scaling.control;
-setup.bounds.phase.control.upper      = [  deltaMax  1].*scaling.control;
+setup.bounds.phase.control.lower      = [ -deltaMax -TRate].*scaling.control;
+setup.bounds.phase.control.upper      = [  deltaMax  TRate].*scaling.control;
 setup.bounds.phase.path.lower         = [-0.2*ones(1,4)];
 setup.bounds.phase.path.upper         = [ 0.2*ones(1,4)];
 setup.bounds.phase.integral.lower     =  0;
