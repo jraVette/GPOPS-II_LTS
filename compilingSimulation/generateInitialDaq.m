@@ -91,16 +91,17 @@ setup.guess.phase.state = [guessFile.segDaq.gpopsOutput.result.solution.phase.st
 setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control zeros(size(setup.guess.phase.time))];
 setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
 
+ 
+%Near arbitrary initial guess
+setup.guess.phase.time    = [s0; sf];
+setup.guess.phase.state   = [x0; x0];
+setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
+setup.guess.phase.control(1,1) = 0.5;
+setup.guess.phase.integral     = 0;
+
 setup.guess.phase.time = setup.guess.phase.time*scaling.length;
 setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
 setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.control);
-
-%Near arbitrary initial guess
-% setup.guess.phase.time    = [s0; sf];
-% setup.guess.phase.state   = [x0; x0];
-% setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
-% setup.guess.phase.control(1,1) = 0.5;
-% setup.guess.phase.integral     = 0;
 
 
 
@@ -127,7 +128,7 @@ setup.bounds.phase.initialstate.upper = x0.*scaling.state;
 setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax -deltaMax].*scaling.state; 
 setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax  deltaMax].*scaling.state;
 setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower.*scaling.state;
-setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;;
+setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;
 setup.bounds.phase.control.lower      = [ -deltaMax -1].*scaling.control;
 setup.bounds.phase.control.upper      = [  deltaMax  1].*scaling.control;
 setup.bounds.phase.path.lower         = [-0.2*ones(1,4)];
@@ -158,7 +159,7 @@ setup.name                        = 'quadCar';
 setup.nlp.solver                  = 'ipopt';
 setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';
 setup.derivatives.derivativelevel = 'second';
-setup.scales.method               = 'automatic-hybridUpdate';
+setup.scales.method               = 'automatic-hybridUpdate';%'automatic-guessUpdate';'automatic-hybridUpdate';'none'
 setup.method                      = 'RPM-Integration';
 setup.displaylevel                = 2;
 setup.nlp.ipoptoptions.maxiterations = 1000;
