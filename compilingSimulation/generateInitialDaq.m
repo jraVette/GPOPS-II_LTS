@@ -6,11 +6,9 @@ function daq = generateInitialDaq()
 % fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
 % fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
 % load(fullVehicleFile);
-% carFilename = '2015_Corvette_C7R.mat';
-
-
-carFileName = 'LimebeerF1Car.mat';
-load(carFileName);
+carFilename = '2015_Corvette_C7R.mat';
+% carFilename = 'LimebeerF1Car.mat';
+load(carFilename);
 
 %% Track
 trackFilename = 'PathInfoChicaneStraightsBeforeAndAfter.mat';
@@ -61,8 +59,8 @@ r0  = 0;
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
 omega_rear0  = vx0*(0.0826371923756939+1)./vehicle.tire_rear.reff.meas; 
 % omega_rear0  = vx0*(1)./vehicle.tire_rear.reff.meas; 
-% T0 = 4110;
-T0 = 2393.5092066619;
+T0 = 4110;
+% T0 = 2393.5092066619;
 % T0 = 0;
 
 ey0 = 0;
@@ -159,7 +157,14 @@ setup.name                        = 'quadCar';
 setup.nlp.solver                  = 'ipopt';
 setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';
 setup.derivatives.derivativelevel = 'second';
-setup.scales.method               = 'automatic-hybridUpdate';%'automatic-guessUpdate';'automatic-hybridUpdate';'none'
+setup.scales.method               = 'automatic-hybrid';%'automatic-guessUpdate';'automatic-hybridUpdate';'none'
+% 'automatic-bounds'       scales the problem from the user-supplied bounds on the variables
+% 'automatic-guess'        scales the problem once using the initial guess of the solution supplied by the user 
+% 'automatic-guessUpdate?  scales the problem from the initial guess on the first mesh and from the solution obtained on every subsequent mesh during the mesh refinement
+% 'automatic-hybrid'       scales the problem from the user supplied bounds on the variables on the first mesh and from the solution obtained on the initial mesh for every subsequent mesh in the mesh refinement
+% 'automatic-hybridUpdate' scales the problem from the bounds on the initial mesh and from the solution obtained on every subsequent mesh during the mesh refinement
+
+
 setup.method                      = 'RPM-Integration';
 setup.displaylevel                = 2;
 setup.nlp.ipoptoptions.maxiterations = 1000;

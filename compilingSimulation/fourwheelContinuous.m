@@ -21,7 +21,7 @@ delta               = input.phase.state(:,11)./scaling.state(11);
 
 %Control
 u1                  = input.phase.control(:,1)./scaling.control(1);
-u2                  = input.phase.control(:,2)./scaling.control(1).*5000;
+u2                  = input.phase.control(:,2)./scaling.control(2);
 
 
 %Parameters
