@@ -47,6 +47,7 @@ CL                  = vehicle.parameter.coeffLift.meas;                    %Coef
 frontalArea         = vehicle.parameter.frontalArea.meas;                  %Frontal area                                   [m^2]
 rho                 = vehicle.parameter.airDensity.meas;                   %Air Density                                    [kg/m^3]
 a_a                 = vehicle.parameter.a_a.meas;                          %Dist to CP to front axle                       [m]
+maxEnginePower      = vehicle.parameter.enginePower.meas;%*745.7010; %Max engine power                                [W]
 
 
 coeffFront          = vehicle.tire_front.coeff.meas;
@@ -92,10 +93,27 @@ kappa_R1    = -(1 + reff_front*-omega_R1./vx);
 kappa_L2    = -(1 + reff_rear* -omega_L2./vx); 
 kappa_R2    = -(1 + reff_rear* -omega_R2./vx);
 
-[fx_L1, fy_L1] = simplifiedPacejka(fz,0,kappa_L1,coeffFront); 
-[fx_R1, fy_R1] = simplifiedPacejka(fz,0,kappa_R1,coeffFront);
-[fx_L2, fy_L2] = simplifiedPacejka(fz,0,kappa_L2,coeffRear);
-[fx_R2, fy_R2] = simplifiedPacejka(fz,0,kappa_R2,coeffRear);
+%Slip angles:
+alpha_L1    = atan((-sin(delta).*(vx + r*wf) + cos(delta).*(vy + r*a))./(cos(delta).*(vx + r*wf) + sin(delta).*(vy + r*a)));
+alpha_R1    = atan(( sin(delta).*(r*wf - vx) + cos(delta).*(vy + r*a))./(cos(delta).*(vx - r*wf) + sin(delta).*(vy + r*a)));
+alpha_L2    = atan((vy - r*b)./(vx + r*wr));
+alpha_R2    = atan((vy - r*b)./(vx - r*wr));
+
+
+% [fx_L1, fy_L1] = simplifiedPacejka(fz,-alpha_L1,kappa_L1,coeffFront); 
+% [fx_R1, fy_R1] = simplifiedPacejka(fz,-alpha_R1,kappa_R1,coeffFront);
+% [fx_L2, fy_L2] = simplifiedPacejka(fz,-alpha_L2,kappa_L2,coeffRear);
+% [fx_R2, fy_R2] = simplifiedPacejka(fz,-alpha_R2,kappa_R2,coeffRear);
+% [fx_L1, fy_L1, muX_L1, muY_L1, FxMax_L1, FyMax_L1, kappa_n_L1, alpha_n_L1, rho_L1, eff_L1] = simplifiedPacejka(fz,-0,kappa_L1,coeffFront); 
+% [fx_R1, fy_R1, muX_R1, muY_R1, FxMax_R1, FyMax_R1, kappa_n_R1, alpha_n_R1, rho_R1, eff_R1] = simplifiedPacejka(fz,-0,kappa_R1,coeffFront);
+% [fx_L2, fy_L2, muX_L2, muY_L2, FxMax_L2, FyMax_L2, kappa_n_L2, alpha_n_L2, rho_L2, eff_L2] = simplifiedPacejka(fz,-0,kappa_L2,coeffRear);
+% [fx_R2, fy_R2, muX_R2, muY_R2, FxMax_R2, FyMax_R2, kappa_n_R2, alpha_n_R2, rho_R2, eff_R2] = simplifiedPacejka(fz,-0,kappa_R2,coeffRear);
+[fx_L1, fy_L1, muX_L1, muY_L1, ~, ~, kappa_n_L1, ~, rho_L1, eff_L1] = simplifiedPacejka(fz,-0,kappa_L1,coeffFront); 
+[fx_R1, fy_R1, muX_R1, muY_R1, ~, ~, kappa_n_R1, ~, rho_R1, eff_R1] = simplifiedPacejka(fz,-0,kappa_R1,coeffFront);
+[fx_L2, fy_L2, muX_L2, muY_L2, ~, ~, kappa_n_L2, ~, rho_L2, eff_L2] = simplifiedPacejka(fz,-0,kappa_L2,coeffRear);
+[fx_R2, fy_R2, muX_R2, muY_R2, ~, ~, kappa_n_R2, ~, rho_R2, eff_R2] = simplifiedPacejka(fz,-0,kappa_R2,coeffRear);
+
+
 
 
 %Sum forces and moment
@@ -122,6 +140,12 @@ domega_R1_dt = (1-tPlus).*(T_drive_R1 - reff_rear*fx_R1)/Jr_f + tPlus.*(dvx_dt/r
 sDot = (vx.*cos(ePsi) - vy.*sin(ePsi))./(1-ey.*k);
 dePsi_dt = r - k.*sDot;
 dey_dt   = vx.*sin(ePsi) + vy.*cos(ePsi);
+
+%Engine
+wheelSpeed = (omega_L2+omega_R2)/2; %Need positive number
+percentEnginePowerUsed = ((T).*wheelSpeed - (maxEnginePower))/maxEnginePower;
+                 %Torque [N*m]*[rad/s]       [W]    
+                 %Power [N*m/s = W]
 
 
 %% Outputs:
@@ -162,7 +186,8 @@ phaseout.integral = timePenality*input.auxdata.minTimeCost + ...
 phaseout.path = [kappa_L1,...
                  kappa_R1,...
                  kappa_L2,...
-                 kappa_R2];
+                 kappa_R2];%;,...
+%                  percentEnginePowerUsed-1];
                             
 phaseout.algebraicStates.slipRatio_L1.meas = kappa_L1;
 phaseout.algebraicStates.slipRatio_R1.meas = kappa_R1;
@@ -179,6 +204,47 @@ phaseout.algebraicStates.fy_R1.meas = fy_R1;
 phaseout.algebraicStates.fy_L2.meas = fy_L2;
 phaseout.algebraicStates.fy_R2.meas = fy_R2;
 
+phaseout.algebraicStates.muX_L1.meas = muX_L1;
+phaseout.algebraicStates.muX_R1.meas = muX_R1;
+phaseout.algebraicStates.muX_L2.meas = muX_L2;
+phaseout.algebraicStates.muX_R2.meas = muX_R2;
+
+phaseout.algebraicStates.muY_L1.meas = muY_L1;
+phaseout.algebraicStates.muY_R1.meas = muY_R1;
+phaseout.algebraicStates.muY_L2.meas = muY_L2;
+phaseout.algebraicStates.muY_R2.meas = muY_R2;
+
+% phaseout.algebraicStates.FxMax_L1.meas = FxMax_L1;
+% phaseout.algebraicStates.FxMax_R1.meas = FxMax_R1;
+% phaseout.algebraicStates.FxMax_L2.meas = FxMax_L2;
+% phaseout.algebraicStates.FxMax_R2.meas = FxMax_R2;
+% 
+% phaseout.algebraicStates.FyMax_L1.meas = FyMax_L1;
+% phaseout.algebraicStates.FyMax_R1.meas = FyMax_R1;
+% phaseout.algebraicStates.FyMax_L2.meas = FyMax_L2;
+% phaseout.algebraicStates.FyMax_R2.meas = FyMax_R2;
+
+phaseout.algebraicStates.kappa_n_L1.meas = kappa_n_L1;
+phaseout.algebraicStates.kappa_n_R1.meas = kappa_n_R1;
+phaseout.algebraicStates.kappa_n_L2.meas = kappa_n_L2;
+phaseout.algebraicStates.kappa_n_R2.meas = kappa_n_R2;
+
+% phaseout.algebraicStates.alpha_n_L1.meas = alpha_n_L1;
+% phaseout.algebraicStates.alpha_n_R1.meas = alpha_n_R1;
+% phaseout.algebraicStates.alpha_n_L2.meas = alpha_n_L2;
+% phaseout.algebraicStates.alpha_n_R2.meas = alpha_n_R2;
+
+phaseout.algebraicStates.rho_L1.meas = rho_L1;
+phaseout.algebraicStates.rho_R1.meas = rho_R1;
+phaseout.algebraicStates.rho_L2.meas = rho_L2;
+phaseout.algebraicStates.rho_R2.meas = rho_R2;
+
+phaseout.algebraicStates.eff_L1.meas = eff_L1;
+phaseout.algebraicStates.eff_R1.meas = eff_R1;
+phaseout.algebraicStates.eff_L2.meas = eff_L2;
+phaseout.algebraicStates.eff_R2.meas = eff_R2;
+
+
 phaseout.algebraicStates.FX.meas = FX;
 phaseout.algebraicStates.FY.meas = FY;
 phaseout.algebraicStates.ax.meas = FX./m;
@@ -194,5 +260,18 @@ phaseout.algebraicStates.diffTorqueTransfer.meas = kd*(omega_L2 - omega_R2);
 phaseout.algebraicStates.tPlus.meas =tPlus;
 phaseout.algebraicStates.tMinus.meas =(1-tPlus);
 
+phaseout.algebraicStates.enginePercent.meas = percentEnginePowerUsed;
 
-phaseout.algebraicStates.unscaledStates.meas = [vx vy r omega_L1 omega_R1 omega_L2 omega_R2 T ey ePsi delta];
+phaseout.algebraicStates.vx_unscaled.meas = vx;
+phaseout.algebraicStates.vy_unscaled.meas = vy;
+phaseout.algebraicStates.r_unscaled.meas = r;
+phaseout.algebraicStates.omega_L1_unscaled.meas = omega_L1;
+phaseout.algebraicStates.omega_R1_unscaled.meas = omega_R1;
+phaseout.algebraicStates.omega_L2_unscaled.meas = omega_L2;
+phaseout.algebraicStates.omega_R2_unscaled.meas = omega_R2;
+phaseout.algebraicStates.T_unscaled.meas = T;
+phaseout.algebraicStates.ey_unscaled.meas = ey;
+phaseout.algebraicStates.ePsi_unscaled.meas = ePsi;
+phaseout.algebraicStates.delta_unscaled.meas = delta;
+
+

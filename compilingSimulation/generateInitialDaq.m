@@ -21,8 +21,8 @@ track = track.track;
 variableNames.indepVarName = 'distance';
 variableNames.stateNames   = { 'vx';'vy';'yawRate';'omegaWheel_L1';'omegaWheel_R1';'omegaWheel_L2';'omegaWheel_R2';'torqueDemand';'ey';'ePsi';'delta'};
 variableNames.controlNames = {'u1';'u2'};
-variableNames.units        = {'m';'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'rad';'rad/s';'N*m/s'};
-variableNames.names        = {'s';'v_x';'v_y';'\dot{\psi}';'\omega_{L1}';'\omega_{R1}';'\omega_{L2}';'\omega_{R2}';'T';'e_y';'e_{\psi}';'\delta';'\dot{\delta}';'\dot{T}'};
+variableNames.units        = {'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s';'N*m';'m';'rad';'rad';'rad/s';'N*m/s';'m'};
+variableNames.names        = {'v_x';'v_y';'\dot{\psi}';'\omega_{L1}';'\omega_{R1}';'\omega_{L2}';'\omega_{R2}';'T';'e_y';'e_{\psi}';'\delta';'u_1';'u_2';'s'};
 
 %% MPC parameters
 horizon                 = 200;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
@@ -83,19 +83,20 @@ x0 = x0.*scaling.state;
 % setup.guess.phase.integral     = 0;
 
 %Load file
-guessFile = load('2018-01-24_11_17_25_solutionSnapshot_Horizon001.mat');
+% guessFile = load('2018-01-24_11_17_25_solutionSnapshot_Horizon001.mat');
+guessFile = load('2018-02-06_16_02_23_solutionSnapshot_Horizon001_corvette.mat');
 setup.guess.phase.time = guessFile.segDaq.gpopsOutput.result.solution.phase.time;
-setup.guess.phase.state = [guessFile.segDaq.gpopsOutput.result.solution.phase.state zeros(size(setup.guess.phase.time))];
-setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control zeros(size(setup.guess.phase.time))];
+setup.guess.phase.state = [guessFile.segDaq.gpopsOutput.result.solution.phase.state];
+setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control];
 setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
 
  
 %Near arbitrary initial guess
-setup.guess.phase.time    = [s0; sf];
-setup.guess.phase.state   = [x0; x0];
-setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
-setup.guess.phase.control(1,1) = 0.5;
-setup.guess.phase.integral     = 0;
+% setup.guess.phase.time    = [s0; sf];
+% setup.guess.phase.state   = [x0; x0];
+% setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
+% setup.guess.phase.control(1,1) = 0.5;
+% setup.guess.phase.integral     = 0;
 
 setup.guess.phase.time = setup.guess.phase.time*scaling.length;
 setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
@@ -129,8 +130,8 @@ setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower.*scaling.
 setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;
 setup.bounds.phase.control.lower      = [ -deltaMax -TRate].*scaling.control;
 setup.bounds.phase.control.upper      = [  deltaMax  TRate].*scaling.control;
-setup.bounds.phase.path.lower         = [-0.2*ones(1,4)];
-setup.bounds.phase.path.upper         = [ 0.2*ones(1,4)];
+setup.bounds.phase.path.lower         = [-0.2*ones(1,4)]%, -100];
+setup.bounds.phase.path.upper         = [ 0.2*ones(1,4)]%,  100];
 setup.bounds.phase.integral.lower     =  0;
 setup.bounds.phase.integral.upper     =  1e9;
 
