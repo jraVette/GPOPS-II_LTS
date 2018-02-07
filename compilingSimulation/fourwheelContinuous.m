@@ -189,7 +189,7 @@ phaseout.integral = timePenality*input.auxdata.minTimeCost + ...
 %                  kappa_R2];%;,...
 %                  percentEnginePowerUsed-1];
 
-phaseout.path = [kappa_n_L1 kappa_n_R1 kappa_n_L2 kappa_n_R2];
+phaseout.path = [kappa_n_L1 kappa_n_R1 kappa_n_L2 kappa_n_R2 percentEnginePowerUsed];
 
 phaseout.algebraicStates.slipRatio_L1.meas = kappa_L1;
 phaseout.algebraicStates.slipRatio_R1.meas = kappa_R1;
