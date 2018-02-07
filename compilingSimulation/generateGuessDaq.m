@@ -14,12 +14,22 @@ function guessDaq = generateGuessDaq(s,x0,uGuess,guessDaq)
 %Creation: 20 Dec 2017 - Jeff Anderson
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
+if nargin == 0
+    guessDaq = generateInitialDaq;
+    inputDaq = load('2018-02-06_16_02_23_solutionSnapshot_Horizon001_corvette');
+    getChannelDataFromDaqFile(inputDaq.segDaq,{'distance';'u1';'u2'});
+    s = distance.*guessDaq.header.scaling.length;
+    uGuess = bsxfun(@times,[u1 u2],guessDaq.header.scaling.control);
+
+    x0 = guessDaq.header.x0;
+end
+
 setup = guessDaq.header.setup; %Save it out to make calling shorter and we'll have to re-insert it in the parsed solution
 
 sSpan = [s(1) s(end)];
 
 options = odeset('MaxStep',0.1);
-[sSol,xSol] = ode45(@(sInput,x)fourwheelMatlabODE(sInput,x,uGuess,s,setup.auxdata), sSpan, x0,options);
+[sSol,xSol] = ode45(@(sInput,x)fourwheelMatlabODE(sInput,x,uGuess,s,setup.auxdata), sSpan, x0,options); 
 
      
 %Resample to requested input
@@ -27,6 +37,9 @@ SSOL = s;
 for i = 1:size(xSol,2)
     XSOL(:,i) = interp1(sSol,xSol(:,i),SSOL);
 end
+SSOL = SSOL./guessDaq.header.scaling.length;
+XSOL = bsxfun(@times,XSOL,1./guessDaq.header.scaling.state);
+uGuess = bsxfun(@times,uGuess,1./guessDaq.header.scaling.control);
 
 guessDaq = parseMatlabOdeOutput(SSOL,XSOL,uGuess,...
     setup.auxdata.variableNames.indepVarName,...

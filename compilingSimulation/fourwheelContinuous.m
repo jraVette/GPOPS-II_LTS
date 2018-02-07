@@ -108,10 +108,10 @@ alpha_R2    = atan((vy - r*b)./(vx - r*wr));
 % [fx_R1, fy_R1, muX_R1, muY_R1, FxMax_R1, FyMax_R1, kappa_n_R1, alpha_n_R1, rho_R1, eff_R1] = simplifiedPacejka(fz,-0,kappa_R1,coeffFront);
 % [fx_L2, fy_L2, muX_L2, muY_L2, FxMax_L2, FyMax_L2, kappa_n_L2, alpha_n_L2, rho_L2, eff_L2] = simplifiedPacejka(fz,-0,kappa_L2,coeffRear);
 % [fx_R2, fy_R2, muX_R2, muY_R2, FxMax_R2, FyMax_R2, kappa_n_R2, alpha_n_R2, rho_R2, eff_R2] = simplifiedPacejka(fz,-0,kappa_R2,coeffRear);
-[fx_L1, fy_L1, muX_L1, muY_L1, ~, ~, kappa_n_L1, ~, rho_L1, eff_L1] = simplifiedPacejka(fz,-0,kappa_L1,coeffFront); 
-[fx_R1, fy_R1, muX_R1, muY_R1, ~, ~, kappa_n_R1, ~, rho_R1, eff_R1] = simplifiedPacejka(fz,-0,kappa_R1,coeffFront);
-[fx_L2, fy_L2, muX_L2, muY_L2, ~, ~, kappa_n_L2, ~, rho_L2, eff_L2] = simplifiedPacejka(fz,-0,kappa_L2,coeffRear);
-[fx_R2, fy_R2, muX_R2, muY_R2, ~, ~, kappa_n_R2, ~, rho_R2, eff_R2] = simplifiedPacejka(fz,-0,kappa_R2,coeffRear);
+[fx_L1, fy_L1, muX_L1, muY_L1, ~, ~, kappa_n_L1, ~, rho_L1, eff_L1] = simplifiedPacejka(fz,-alpha_L1,kappa_L1,coeffFront); 
+[fx_R1, fy_R1, muX_R1, muY_R1, ~, ~, kappa_n_R1, ~, rho_R1, eff_R1] = simplifiedPacejka(fz,-alpha_R1,kappa_R1,coeffFront);
+[fx_L2, fy_L2, muX_L2, muY_L2, ~, ~, kappa_n_L2, ~, rho_L2, eff_L2] = simplifiedPacejka(fz,-alpha_L2,kappa_L2,coeffRear);
+[fx_R2, fy_R2, muX_R2, muY_R2, ~, ~, kappa_n_R2, ~, rho_R2, eff_R2] = simplifiedPacejka(fz,-alpha_R2,kappa_R2,coeffRear);
 
 
 

@@ -24,7 +24,7 @@ kappa_R2 = phaseout.algebraicStates.slipRatio_R2.meas;
 absFlag = false;
 if abs(kappa_L1)>absSlipRatioFlag || abs(kappa_R1)>absSlipRatioFlag || ...
    abs(kappa_L2)>absSlipRatioFlag || abs(kappa_R2)>absSlipRatioFlag
-    input.phase.control = 0;
+    input.phase.control(:,2) = 0;
     phaseout = fourwheelContinuous(input);
     dx = phaseout.dynamics';
     absFlag = true;

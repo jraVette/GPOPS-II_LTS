@@ -36,19 +36,7 @@ timingDistanceFinish    = track.finishDistance;
 finishDistance          = timingDistanceFinish+10;
 horizonRefinement       = true;
 
-%% Scaling
-scaling.length = 1;%1/(vehicle.parameter.a.meas+vehicle.parameter.b.meas);
-scaling.mass   = 1;%1/(vehicle.parameter.mass.meas);
-scaling.time   = 1;%sqrt(scaling.length*9.81);
-scaling.angle  = 1;
 
-scaling.velocity = scaling.length/scaling.time;
-scaling.acceleration = scaling.length/scaling.time^2;
-scaling.angularVelocity = scaling.angle/scaling.time;
-scaling.force = scaling.mass*scaling.acceleration;
-scaling.torque = scaling.force*scaling.length;
-scaling.state = [scaling.velocity scaling.velocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.torque scaling.length scaling.angle scaling.angle];
-scaling.control = [scaling.angle/scaling.time  scaling.torque/scaling.time];
 
 %% Boundary conditions
 s0 = initialDistance;
@@ -68,7 +56,6 @@ ePsi0 = 0;
 delta0 = 0;
 
 x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0 delta0];
-x0 = x0.*scaling.state;
 
 
 
@@ -98,9 +85,7 @@ setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.
 % setup.guess.phase.control(1,1) = 0.5;
 % setup.guess.phase.integral     = 0;
 
-setup.guess.phase.time = setup.guess.phase.time*scaling.length;
-setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
-setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.control);
+
 
 
 
@@ -112,11 +97,38 @@ vyMax       = 10;                                                        %Origna
 rMax        = 55*myConstants.deg2rad;                                    %Orignal bound 45 deg/s
 omegaLb     = vxLb/vehicle.tire_front.reff.meas;                           %Just using the reff of the front should be sufficient
 omegaUb     = vxUb/vehicle.tire_front.reff.meas;
-TMax        = 5000;
-TRate       = 100*1000/5000;                                                 % N*m/s
+TMax        = 5000;%600*myConstants.ftlbf2nm*3.42*2.298; %maybe more realisitc
+TRate       = 100*1000/5000/2;                                                 % N*m/s
 eyMax       = 5;                                                       %Road width constraint
 ePsiMax     = 25*myConstants.deg2rad;                                  %Pevious solutions said this was bounded by [-25, 25]
 deltaMax    = 45*myConstants.deg2rad;
+deltaRate   = 100*myConstants.deg2rad; %Tremlet said 100deg/s
+
+%% Scaling
+scaling.length = 1/100;%1/(vehicle.parameter.a.meas+vehicle.parameter.b.meas);
+scaling.mass   = 1/1000;%1/(vehicle.parameter.mass.meas);
+scaling.time   = sqrt(scaling.length*25*9.81);
+scaling.angle  = 1;
+
+scaling.velocity = scaling.length/scaling.time;
+scaling.acceleration = scaling.length/scaling.time^2;
+scaling.angularVelocity = scaling.angle/scaling.time;
+scaling.force = scaling.mass*scaling.acceleration;
+scaling.torque = scaling.force*scaling.length;
+scaling.state = [scaling.velocity scaling.velocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.torque scaling.length scaling.angle scaling.angle];
+scaling.control = [scaling.angle/scaling.time  scaling.torque/scaling.time];
+% 
+% scaling.state = [1/vxUb 1/vyMax 1/rMax 1/omegaUb 1/omegaUb 1/omegaUb 1/omegaUb 1/TMax 1/eyMax 1/ePsiMax 1/deltaMax];
+% scaling.control = [1/deltaRate 1/TRate];
+    
+%x0 scaling
+x0 = x0.*scaling.state;
+%Guess scaling
+setup.guess.phase.time = setup.guess.phase.time*scaling.length;
+setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
+setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.control);
+    
+%% Setup bounds (need bounds before scaling)
 
 setup.bounds.phase.initialtime.lower  = s0*scaling.length; 
 setup.bounds.phase.initialtime.upper  = s0*scaling.length;
@@ -128,8 +140,8 @@ setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omeg
 setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax  deltaMax].*scaling.state;
 setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower.*scaling.state;
 setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;
-setup.bounds.phase.control.lower      = [ -deltaMax -TRate].*scaling.control;
-setup.bounds.phase.control.upper      = [  deltaMax  TRate].*scaling.control;
+setup.bounds.phase.control.lower      = [ -deltaRate -TRate].*scaling.control;
+setup.bounds.phase.control.upper      = [  deltaRate  TRate].*scaling.control;
 setup.bounds.phase.path.lower         = [0*ones(1,4) 0]%, -100];
 setup.bounds.phase.path.upper         = [0.8*ones(1,4) 10]%,  100];
 setup.bounds.phase.integral.lower     =  0;
