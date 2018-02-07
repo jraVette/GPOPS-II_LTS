@@ -130,8 +130,8 @@ setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower.*scaling.
 setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;
 setup.bounds.phase.control.lower      = [ -deltaMax -TRate].*scaling.control;
 setup.bounds.phase.control.upper      = [  deltaMax  TRate].*scaling.control;
-setup.bounds.phase.path.lower         = [-0.2*ones(1,4)]%, -100];
-setup.bounds.phase.path.upper         = [ 0.2*ones(1,4)]%,  100];
+setup.bounds.phase.path.lower         = [0*ones(1,4)]%, -100];
+setup.bounds.phase.path.upper         = [0.8*ones(1,4)]%,  100];
 setup.bounds.phase.integral.lower     =  0;
 setup.bounds.phase.integral.upper     =  1e9;
 
