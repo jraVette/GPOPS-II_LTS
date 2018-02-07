@@ -38,16 +38,16 @@ function [Fx, Fy, muX, muY, FxMax, FyMax, kappa_n, alpha_n, rho, efficiency] = s
 %Convet to rad
 % alpha = alpha*d2r;
 
-%Peak mu's
+% %Peak mu's
 muX_max  = interp1([coeff.Fz1 coeff.Fz2],[coeff.muX1   coeff.muX2],  Fz,'linear','extrap');
 muY_max  = interp1([coeff.Fz1 coeff.Fz2],[coeff.muY1   coeff.muY2],  Fz,'linear','extrap');
 kappaMax = interp1([coeff.Fz1 coeff.Fz2],[coeff.kappa1 coeff.kappa2],Fz,'linear','extrap');
 alphaMax = interp1([coeff.Fz1 coeff.Fz2],[coeff.alpha1 coeff.alpha2],Fz,'linear','extrap');
 
-% muX_max = (Fz - coeff.Fz1)*(coeff.muX2 - coeff.muX1)/(coeff.Fz2 - coeff.Fz1) + coeff.muX1;
-% muY_max = (Fz - coeff.Fz1)*(coeff.muY2 - coeff.muY1)/(coeff.Fz2 - coeff.Fz1) + coeff.muY1;
-% kappaMax = (Fz - coeff.Fz1)*(coeff.kappa2 - coeff.kappa1)/(coeff.Fz2 - coeff.Fz1) + coeff.kappa1;
-% alphaMax = (Fz - coeff.Fz1)*(coeff.alpha2 - coeff.alpha1)/(coeff.Fz2 - coeff.Fz1) + coeff.alpha1;
+% muX_max = (Fz - coeff.Fz1).*(coeff.muX2 - coeff.muX1)./(coeff.Fz2 - coeff.Fz1) + coeff.muX1;
+% muY_max = (Fz - coeff.Fz1).*(coeff.muY2 - coeff.muY1)./(coeff.Fz2 - coeff.Fz1) + coeff.muY1;
+% kappaMax = (Fz - coeff.Fz1).*(coeff.kappa2 - coeff.kappa1)./(coeff.Fz2 - coeff.Fz1) + coeff.kappa1;
+% alphaMax = (Fz - coeff.Fz1).*(coeff.alpha2 - coeff.alpha1)./(coeff.Fz2 - coeff.Fz1) + coeff.alpha1;
 
 %Peak forces possible
 FxMax = muX_max.*Fz;

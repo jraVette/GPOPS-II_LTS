@@ -143,7 +143,7 @@ dey_dt   = vx.*sin(ePsi) + vy.*cos(ePsi);
 
 %Engine
 wheelSpeed = (omega_L2+omega_R2)/2; %Need positive number
-percentEnginePowerUsed = ((T).*wheelSpeed - (maxEnginePower))/maxEnginePower;
+percentEnginePowerUsed = ((T).*wheelSpeed)/maxEnginePower;
                  %Torque [N*m]*[rad/s]       [W]    
                  %Power [N*m/s = W]
 
