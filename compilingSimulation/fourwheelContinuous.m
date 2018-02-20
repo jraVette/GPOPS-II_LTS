@@ -163,7 +163,7 @@ phaseout.dynamics = [(dvx_dt./sDot).*(scaling.velocity/scaling.time/scaling.velo
                  
 % phaseout.integrand = 100*(1./sDot) + input.auxdata.controlWeight*u2.^2 + ... %worked with 100*minTime
 %                      (vx-100).^2;%;*1e-1;
-phaseout.integrand = (vx-100).^2 + vy.^2 + r.^2 + ey.^2 + ePsi.^2 + 1./sDot + input.auxdata.controlWeight*u2.^2;
+phaseout.integrand = (vx-100).^2 + vy.^2 + r.^2 + ey.^2 + ePsi.^2 + 1./sDot + input.auxdata.controlWeight*u2.^2 + input.auxdata.controlWeight*u1.^2 + (percentEnginePowerUsed.^2-1);
 timePenality = 1./sDot;
 % stageCost = bsxfun(@times,bsxfun(@minus,input.phase.state,input.auxdata.stageCost.targetState).^2,input.auxdata.stageCost.weight);
 controlCost = input.auxdata.controlWeight*u2.^2;
@@ -189,7 +189,7 @@ phaseout.integral = timePenality*input.auxdata.minTimeCost + ...
 %                  kappa_R2];%;,...
 %                  percentEnginePowerUsed-1];
 
-phaseout.path = [kappa_n_L1 kappa_n_R1 kappa_n_L2 kappa_n_R2 percentEnginePowerUsed];
+phaseout.path = [kappa_n_L1 kappa_n_R1 kappa_n_L2 kappa_n_R2];
 
 phaseout.algebraicStates.slipRatio_L1.meas = kappa_L1;
 phaseout.algebraicStates.slipRatio_R1.meas = kappa_R1;
