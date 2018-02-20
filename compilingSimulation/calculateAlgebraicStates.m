@@ -21,6 +21,13 @@ input.phase.control = output.result.(solutionField).phase.control;
 
 input.auxdata = daq.header.setup.auxdata;
 
+%Need to turn scaling off as the output is already unscaled
+fields = fieldnames(input.auxdata.scaling);
+for iField = 1:length(fields)
+    field = fields{iField};
+    input.auxdata.scaling.(field) = ones(size(input.auxdata.scaling.(field)));
+end
+
 phaseout = fourwheelContinuous(input);
 
 algebraicStates = fieldnames(phaseout.algebraicStates);
