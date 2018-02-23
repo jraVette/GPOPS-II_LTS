@@ -11,8 +11,12 @@ function [horizonDaq, convergence] = fourwheelMain(horizonDaq,varargin)
 %   daq - updated strucutre with the solution
 %
 %Creation: 21 Dec 2017 - Jeff Anderson
+%Updated:  25 Feb 2018 - Jeff Anderson - have it returing the failed output
+%   vs an empty horizonDaq. Killed the snapshot code as the diary is
+%   handled in gpopsMPC.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+defaults = {'retryIfOneMeshSucessful',true};
+setDefaultsForVarargin(defaults,varargin);
 
 setup = horizonDaq.header.setup;
 
@@ -26,52 +30,52 @@ setup.adigatorhes.endpoint      = @fourwheelEndpointADiGatorHes;
 
 
 %% SOVLE
-tic
 output   = gpops2(setup);
-toc
 
-saveSnapshotofShortSeg = 'snapshot';
-%%Deal w/ saving file
-if ~isempty(saveSnapshotofShortSeg)
-    save(saveSnapshotofShortSeg)
-    ipoptfn = sprintf('%s_IPOPT.txt',strrep(saveSnapshotofShortSeg,'.mat',''));
-    sysCommand = sprintf('mv quadCarIPOPTinfo.txt %s',ipoptfn);
-    system(sysCommand);
+nlpInfoOverMeshHistories = zeros(output.meshcounts,1);
+for iMesh = 1:output.meshcounts
+    nlpInfoOverMeshHistories(iMesh) = output.meshhistory(iMesh).result.nlpinfo;
 end
+
+%If it didn't converge, see if any mesh histories did, and if so try them
+%as a guess.
+while ~ismember(output.result.nlpinfo,horizonDaq.header.acceptableNlpOutpus) && ...
+      ~isempty(find(nlpInfoOverMeshHistories == 0, 1)) && retryIfOneMeshSucessful
+    %Didn't converge, but we had one mesh history that did, use that as a
+    %guess
+    iMeshForGuess = find(nlpInfoOverMeshHistories == 0,1,'last');
+    setup.guess.phase.time = output.meshhistory(iMeshForGuess).result.solution.phase.time;
+    setup.guess.phase.state = output.meshhistory(iMeshForGuess).result.solution.phase.state;
+    setup.guess.phase.control = output.meshhistory(iMeshForGuess).result.solution.phase.control;
+    setup.guess.phase.integral = output.meshhistory(iMeshForGuess).result.solution.phase.integral;
+    output   = gpops2(setup);
+end
+
 
 %Post process
 if ismember(output.result.nlpinfo,horizonDaq.header.acceptableNlpOutpus)
     convergence = true;
-%     if ~isa(gpopsOptions.specifyMeshIterationSolution,'char')
-%         output.result = output.meshhistory(gpopsOptions.specifyMeshIterationSolution).result;
-%     end
+    %horizonDaq the solution
+                                %    vx   vy   r  t
+    daqGpops = parseGpops2toDaq(output,...
+        horizonDaq.header.variableNames.stateNames,...
+        horizonDaq.header.variableNames.controlNames,...
+        horizonDaq.header.variableNames.indepVarName,...
+        horizonDaq.header.variableNames.units,...
+        horizonDaq.header.variableNames.names);
+    tempHeader = horizonDaq.header;                          
+    horizonDaq = catstruct(daqGpops,horizonDaq);
+    horizonDaq.gpopsSetup = setup;
+    horizonDaq.header = tempHeader;
+
+    %Calc algebraic states
+    horizonDaq = calculateAlgebraicStates(horizonDaq);
 else
-    horizonDaq = [];
+    horizonDaq.gpopsOutput = output;
+    horizonDaq.gpopsSetup = setup;
     convergence = false; 
-    return
 end
 
-%horizonDaq the solution
-                            %    vx   vy   r  t
-daqGpops = parseGpops2toDaq(output,...
-    horizonDaq.header.variableNames.stateNames,...
-    horizonDaq.header.variableNames.controlNames,...
-    horizonDaq.header.variableNames.indepVarName,...
-    horizonDaq.header.variableNames.units,...
-    horizonDaq.header.variableNames.names);
-tempHeader = horizonDaq.header;                          
-horizonDaq = catstruct(daqGpops,horizonDaq);
-horizonDaq.gpopsSetup = setup;
-horizonDaq.header = tempHeader;
-
-%Calc algebraic states
-horizonDaq = calculateAlgebraicStates(horizonDaq);
-
-
-%%Deal w/ saving file - need to resave after editing
-if ~isempty(saveSnapshotofShortSeg)
-    save(saveSnapshotofShortSeg)
-end
 
         
 

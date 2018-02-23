@@ -1,6 +1,8 @@
 function phaseout = fourwheelContinuous(input)
-%% Stats and controls, scale them appropiately
 scaling = input.auxdata.scaling;
+
+
+%% Variables, states, and control
 %IndepVar
 s                   = input.phase.time./scaling.length;     
 
@@ -16,15 +18,13 @@ T                   = input.phase.state(:,8)./scaling.state(8);
 ey                  = input.phase.state(:,9)./scaling.state(9);
 ePsi                = input.phase.state(:,10)./scaling.state(10);
 delta               = input.phase.state(:,11)./scaling.state(11);
-%IF YOU ADD STATES, expand integral 
-
 
 %Control
 u1                  = input.phase.control(:,1)./scaling.control(1);
 u2                  = input.phase.control(:,2)./scaling.control(2);
 
 
-%Parameters
+%% Parameters
 vehicle             = input.auxdata.vehicle;
 m                   = vehicle.parameter.mass.meas;                         %Total vehicle mass                             [kg] 
 Izz                 = vehicle.parameter.yawInertia.meas;                   %Yaw Inertia                                    [kg*m^2]
@@ -59,7 +59,7 @@ fz = 2000;
 
 %% Track
 track = input.auxdata.track;
-k = interp1(track.distance.meas,track.curvature.meas,s,'spline','extrap');
+k = interp1(track.distance.meas,track.curvature.meas,s+input.auxdata.currentDistance,'spline','extrap');
 
 %% Aero
 %Aero loads      
@@ -149,40 +149,50 @@ percentEnginePowerUsed = ((T).*wheelSpeed)/maxEnginePower;
 
 
 %% Outputs:
-phaseout.dynamics = [(dvx_dt./sDot).*(scaling.velocity/scaling.time/scaling.velocity),...
-                     (dvy_dt./sDot).*(scaling.velocity/scaling.time/scaling.velocity),...
-                     (dr_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
-                     (domega_L1_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
-                     (domega_R1_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
-                     (domega_L2_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
-                     (domega_R2_dt./sDot).*(scaling.angularVelocity/scaling.time/scaling.velocity),...
-                     (u2./sDot).*(scaling.torque/scaling.time/scaling.velocity),...
-                     (dey_dt./sDot).*(scaling.length/scaling.time/scaling.velocity),...
-                     (dePsi_dt./sDot).*(scaling.angle/scaling.time/scaling.velocity),...
-                     (u1./sDot).*(scaling.angle/scaling.time/scaling.velocity)];              
+phaseout.dynamics = [(dvx_dt./sDot)*(scaling.velocity/scaling.time/scaling.velocity),...
+                     (dvy_dt./sDot)*(scaling.velocity/scaling.time/scaling.velocity),...
+                     (dr_dt./sDot)*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_L1_dt./sDot)*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_R1_dt./sDot)*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_L2_dt./sDot)*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (domega_R2_dt./sDot)*(scaling.angularVelocity/scaling.time/scaling.velocity),...
+                     (u2./sDot)*(scaling.torque/scaling.time/scaling.velocity),...
+                     (dey_dt./sDot)*(scaling.length/scaling.time/scaling.velocity),...
+                     (dePsi_dt./sDot)*(scaling.angle/scaling.time/scaling.velocity),...
+                     (u1./sDot)*(scaling.angle/scaling.time/scaling.velocity)];              
                  
 % phaseout.integrand = 100*(1./sDot) + input.auxdata.controlWeight*u2.^2 + ... %worked with 100*minTime
 %                      (vx-100).^2;%;*1e-1;
-phaseout.integrand = (vx-100).^2 + vy.^2 + r.^2 + ey.^2 + ePsi.^2 + 1./sDot + input.auxdata.controlWeight*u2.^2 + input.auxdata.controlWeight*u1.^2 + (percentEnginePowerUsed.^2-1);
-timePenality = 1./sDot;
+phaseout.integrand =  ((vx-100)*scaling.velocity).^2 +...
+                      (vy*scaling.velocity).^2 +...
+                      (r*scaling.angularVelocity).^2 + ...
+                      (ey*scaling.length).^2 +...
+                      (ePsi*scaling.angle).^2 + ...
+                      1e6*1./(sDot*scaling.velocity) + ...
+                      input.auxdata.controlWeight*(u2*scaling.torque/scaling.time).^2 + ...
+                      1000*input.auxdata.controlWeight*(u1*scaling.angularVelocity).^2 + ...
+                      (percentEnginePowerUsed.^2-1);
+                  
+                  
+% timePenality = 1./sDot;
 % stageCost = bsxfun(@times,bsxfun(@minus,input.phase.state,input.auxdata.stageCost.targetState).^2,input.auxdata.stageCost.weight);
-controlCost = input.auxdata.controlWeight*u2.^2;
-
-stageCost= (input.phase.state(:,1) - input.auxdata.stageCost.targetState(1)).^2*input.auxdata.stageCost.scaling(1) + ...
-           (input.phase.state(:,2) - input.auxdata.stageCost.targetState(2)).^2*input.auxdata.stageCost.scaling(2) + ...
-           (input.phase.state(:,3) - input.auxdata.stageCost.targetState(3)).^2*input.auxdata.stageCost.scaling(3) + ...
-           (input.phase.state(:,4) - input.auxdata.stageCost.targetState(4)).^2*input.auxdata.stageCost.scaling(4) + ...
-           (input.phase.state(:,5) - input.auxdata.stageCost.targetState(5)).^2*input.auxdata.stageCost.scaling(5) + ...
-           (input.phase.state(:,6) - input.auxdata.stageCost.targetState(6)).^2*input.auxdata.stageCost.scaling(6) + ...
-           (input.phase.state(:,7) - input.auxdata.stageCost.targetState(7)).^2*input.auxdata.stageCost.scaling(7) + ...
-           (input.phase.state(:,8) - input.auxdata.stageCost.targetState(8)).^2*input.auxdata.stageCost.scaling(8) + ...
-           (input.phase.state(:,9) - input.auxdata.stageCost.targetState(9)).^2*input.auxdata.stageCost.scaling(9) + ...
-           (input.phase.state(:,10) - input.auxdata.stageCost.targetState(10)).^2*input.auxdata.stageCost.scaling(10) + ...
-           (input.phase.state(:,11) - input.auxdata.stageCost.targetState(11)).^2*input.auxdata.stageCost.scaling(11);
-
-phaseout.integral = timePenality*input.auxdata.minTimeCost + ...
-                    controlCost + ...
-                    stageCost*input.auxdata.stageCost.weight;
+% controlCost = input.auxdata.controlWeight*u2.^2;
+% 
+% stageCost= (input.phase.state(:,1) - input.auxdata.stageCost.targetState(1)).^2*input.auxdata.stageCost.scaling(1) + ...
+%            (input.phase.state(:,2) - input.auxdata.stageCost.targetState(2)).^2*input.auxdata.stageCost.scaling(2) + ...
+%            (input.phase.state(:,3) - input.auxdata.stageCost.targetState(3)).^2*input.auxdata.stageCost.scaling(3) + ...
+%            (input.phase.state(:,4) - input.auxdata.stageCost.targetState(4)).^2*input.auxdata.stageCost.scaling(4) + ...
+%            (input.phase.state(:,5) - input.auxdata.stageCost.targetState(5)).^2*input.auxdata.stageCost.scaling(5) + ...
+%            (input.phase.state(:,6) - input.auxdata.stageCost.targetState(6)).^2*input.auxdata.stageCost.scaling(6) + ...
+%            (input.phase.state(:,7) - input.auxdata.stageCost.targetState(7)).^2*input.auxdata.stageCost.scaling(7) + ...
+%            (input.phase.state(:,8) - input.auxdata.stageCost.targetState(8)).^2*input.auxdata.stageCost.scaling(8) + ...
+%            (input.phase.state(:,9) - input.auxdata.stageCost.targetState(9)).^2*input.auxdata.stageCost.scaling(9) + ...
+%            (input.phase.state(:,10) - input.auxdata.stageCost.targetState(10)).^2*input.auxdata.stageCost.scaling(10) + ...
+%            (input.phase.state(:,11) - input.auxdata.stageCost.targetState(11)).^2*input.auxdata.stageCost.scaling(11);
+% 
+% phaseout.integral = timePenality*input.auxdata.minTimeCost + ...
+%                     controlCost + ...
+%                     stageCost*input.auxdata.stageCost.weight;
 % phaseout.path = [kappa_L1,...
 %                  kappa_R1,...
 %                  kappa_L2,...
@@ -191,89 +201,13 @@ phaseout.integral = timePenality*input.auxdata.minTimeCost + ...
 
 phaseout.path = [kappa_n_L1 kappa_n_R1 kappa_n_L2 kappa_n_R2];
 
-phaseout.algebraicStates.slipRatio_L1.meas = kappa_L1;
-phaseout.algebraicStates.slipRatio_R1.meas = kappa_R1;
-phaseout.algebraicStates.slipRatio_L2.meas = kappa_L2;
-phaseout.algebraicStates.slipRatio_R2.meas = kappa_R2;
-
-phaseout.algebraicStates.fx_L1.meas = fx_L1;
-phaseout.algebraicStates.fx_R1.meas = fx_R1;
-phaseout.algebraicStates.fx_L2.meas = fx_L2;
-phaseout.algebraicStates.fx_R2.meas = fx_R2;
-
-phaseout.algebraicStates.fy_L1.meas = fy_L1;
-phaseout.algebraicStates.fy_R1.meas = fy_R1;
-phaseout.algebraicStates.fy_L2.meas = fy_L2;
-phaseout.algebraicStates.fy_R2.meas = fy_R2;
-
-phaseout.algebraicStates.muX_L1.meas = muX_L1;
-phaseout.algebraicStates.muX_R1.meas = muX_R1;
-phaseout.algebraicStates.muX_L2.meas = muX_L2;
-phaseout.algebraicStates.muX_R2.meas = muX_R2;
-
-phaseout.algebraicStates.muY_L1.meas = muY_L1;
-phaseout.algebraicStates.muY_R1.meas = muY_R1;
-phaseout.algebraicStates.muY_L2.meas = muY_L2;
-phaseout.algebraicStates.muY_R2.meas = muY_R2;
-
-% phaseout.algebraicStates.FxMax_L1.meas = FxMax_L1;
-% phaseout.algebraicStates.FxMax_R1.meas = FxMax_R1;
-% phaseout.algebraicStates.FxMax_L2.meas = FxMax_L2;
-% phaseout.algebraicStates.FxMax_R2.meas = FxMax_R2;
-% 
-% phaseout.algebraicStates.FyMax_L1.meas = FyMax_L1;
-% phaseout.algebraicStates.FyMax_R1.meas = FyMax_R1;
-% phaseout.algebraicStates.FyMax_L2.meas = FyMax_L2;
-% phaseout.algebraicStates.FyMax_R2.meas = FyMax_R2;
-
-phaseout.algebraicStates.kappa_n_L1.meas = kappa_n_L1;
-phaseout.algebraicStates.kappa_n_R1.meas = kappa_n_R1;
-phaseout.algebraicStates.kappa_n_L2.meas = kappa_n_L2;
-phaseout.algebraicStates.kappa_n_R2.meas = kappa_n_R2;
-
-% phaseout.algebraicStates.alpha_n_L1.meas = alpha_n_L1;
-% phaseout.algebraicStates.alpha_n_R1.meas = alpha_n_R1;
-% phaseout.algebraicStates.alpha_n_L2.meas = alpha_n_L2;
-% phaseout.algebraicStates.alpha_n_R2.meas = alpha_n_R2;
-
-phaseout.algebraicStates.rho_L1.meas = rho_L1;
-phaseout.algebraicStates.rho_R1.meas = rho_R1;
-phaseout.algebraicStates.rho_L2.meas = rho_L2;
-phaseout.algebraicStates.rho_R2.meas = rho_R2;
-
-phaseout.algebraicStates.eff_L1.meas = eff_L1;
-phaseout.algebraicStates.eff_R1.meas = eff_R1;
-phaseout.algebraicStates.eff_L2.meas = eff_L2;
-phaseout.algebraicStates.eff_R2.meas = eff_R2;
-
-
-phaseout.algebraicStates.FX.meas = FX;
-phaseout.algebraicStates.FY.meas = FY;
-phaseout.algebraicStates.ax.meas = FX./m;
-phaseout.algebraicStates.ay.meas = FY./m;
-
-phaseout.algebraicStates.T_drive_L1.meas = T_drive_L1;
-phaseout.algebraicStates.T_drive_R1.meas = T_drive_R1;
-phaseout.algebraicStates.T_drive_L2.meas = T_drive_L2;
-phaseout.algebraicStates.T_drive_R2.meas = T_drive_R2;
-
-phaseout.algebraicStates.kt.meas = kt;
-phaseout.algebraicStates.diffTorqueTransfer.meas = kd*(omega_L2 - omega_R2);
-phaseout.algebraicStates.tPlus.meas =tPlus;
-phaseout.algebraicStates.tMinus.meas =(1-tPlus);
-
-phaseout.algebraicStates.enginePercent.meas = percentEnginePowerUsed;
-
-phaseout.algebraicStates.vx_unscaled.meas = vx;
-phaseout.algebraicStates.vy_unscaled.meas = vy;
-phaseout.algebraicStates.r_unscaled.meas = r;
-phaseout.algebraicStates.omega_L1_unscaled.meas = omega_L1;
-phaseout.algebraicStates.omega_R1_unscaled.meas = omega_R1;
-phaseout.algebraicStates.omega_L2_unscaled.meas = omega_L2;
-phaseout.algebraicStates.omega_R2_unscaled.meas = omega_R2;
-phaseout.algebraicStates.T_unscaled.meas = T;
-phaseout.algebraicStates.ey_unscaled.meas = ey;
-phaseout.algebraicStates.ePsi_unscaled.meas = ePsi;
-phaseout.algebraicStates.delta_unscaled.meas = delta;
-
-
+% % phaseout.algebraicStates.vy_scaled.meas = vy;
+% % phaseout.algebraicStates.r_scaled.meas = r;
+% % phaseout.algebraicStates.omega_L1_scaled.meas = omega_L1;
+% % phaseout.algebraicStates.omega_R1_scaled.meas = omega_R1;
+% % phaseout.algebraicStates.omega_L2_scaled.meas = omega_L2;
+% % phaseout.algebraicStates.omega_R2_scaled.meas = omega_R2;
+% % phaseout.algebraicStates.T_scaled.meas = T;
+% % phaseout.algebraicStates.ey_scaled.meas = ey;
+% % phaseout.algebraicStates.ePsi_scaled.meas = ePsi;
+% % phaseout.algebraicStates.delta_scaled.meas = delta;

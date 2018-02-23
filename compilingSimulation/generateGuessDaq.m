@@ -16,7 +16,7 @@ function guessDaq = generateGuessDaq(s,x0,uGuess,guessDaq)
 
 if nargin == 0
     guessDaq = generateInitialDaq;
-    inputDaq = load('2018-02-06_16_02_23_solutionSnapshot_Horizon001_corvette');
+    inputDaq = load('guess2018-02-20_17_11_56_solutionSnapshot_Horizon001.mat');
     getChannelDataFromDaqFile(inputDaq.segDaq,{'distance';'u1';'u2'});
     s = distance.*guessDaq.header.scaling.length;
     uGuess = bsxfun(@times,[u1 u2],guessDaq.header.scaling.control);
