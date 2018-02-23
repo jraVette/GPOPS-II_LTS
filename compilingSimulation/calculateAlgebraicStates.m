@@ -28,7 +28,16 @@ for iField = 1:length(fields)
     input.auxdata.scaling.(field) = ones(size(input.auxdata.scaling.(field)));
 end
 
-phaseout = fourwheelContinuous(input);
+%% CAll CONTINOUS FUNCTION
+%combine the continuous function and algebraic state command files into one
+%mcode
+if ~isunix; error('Following code uses bash, need to recode for windows'); end
+!rm temp.m
+!echo 'function phaseout = temp(input)' > temp.m
+!tail -n +2 fourwheelContinuous.m >> temp.m
+!cat algebraicStatesCommandsForContinuousFunction.m >> temp.m
+phaseout = temp(input);
+!rm temp.m
 
 algebraicStates = fieldnames(phaseout.algebraicStates);
 for i = 1:length(algebraicStates)
