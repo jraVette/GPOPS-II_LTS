@@ -36,9 +36,24 @@ if ~isunix; error('Following code uses bash, need to recode for windows'); end
 !echo 'function phaseout = temp(input)' > temp.m
 !tail -n +2 fourwheelContinuous.m >> temp.m
 !cat algebraicStatesCommandsForContinuousFunction.m >> temp.m
-phaseout = temp(input);
-!rm temp.m
 
+%Sometimes on palmetto, writting files takes time...so need try more 1x
+count = 1; 
+retryFlag = true;
+err = [];
+while count<100 && retryFlag
+    try
+        phaseout = temp(input);
+    catch err
+    end
+    if isempty(err)
+        retryFlag = false;
+    else
+        count = count+1;
+        err = [];
+    end
+end
+!rm temp.m
 algebraicStates = fieldnames(phaseout.algebraicStates);
 for i = 1:length(algebraicStates)
     ch = algebraicStates{i};
