@@ -15,14 +15,15 @@ function [horizonDaq, convergence] = fourwheelMain(horizonDaq,varargin)
 %   vs an empty horizonDaq. Killed the snapshot code as the diary is
 %   handled in gpopsMPC.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-defaults = {'retryIfOneMeshSucessful',true};
+defaults = {'retryIfOneMeshSucessful',true
+            'nRetries', 2};
 setDefaultsForVarargin(defaults,varargin);
 
 setup = horizonDaq.header.setup;
 
 setup.functions.continuous        = @fourwheelContinuous;                  %Unfortunately, I don't know a better way than a static link to the continuous and endpoitn functions.
 setup.functions.endpoint          = @fourwheelEndpoint;
-% adigatorfilenames = adigatorGenFiles4gpops2(setup);
+
 setup.adigatorgrd.continuous    = @fourwheelContinuousADiGatorGrd;         %Unfortunately, I don't know a better way than a static link to the adigator files.
 setup.adigatorgrd.endpoint      = @fourwheelEndpointADiGatorGrd;
 setup.adigatorhes.continuous    = @fourwheelContinuousADiGatorHes;
@@ -39,8 +40,11 @@ end
 
 %If it didn't converge, see if any mesh histories did, and if so try them
 %as a guess.
+retryCount =1 ;
 while ~ismember(output.result.nlpinfo,horizonDaq.header.acceptableNlpOutpus) && ...
-      ~isempty(find(nlpInfoOverMeshHistories == 0, 1)) && retryIfOneMeshSucessful
+      ~isempty(find(nlpInfoOverMeshHistories == 0, 1)) && ...
+      retryIfOneMeshSucessful && ...
+      retryCount <= nRetries 
     %Didn't converge, but we had one mesh history that did, use that as a
     %guess
     iMeshForGuess = find(nlpInfoOverMeshHistories == 0,1,'last');
@@ -49,6 +53,7 @@ while ~ismember(output.result.nlpinfo,horizonDaq.header.acceptableNlpOutpus) && 
     setup.guess.phase.control = output.meshhistory(iMeshForGuess).result.solution.phase.control;
     setup.guess.phase.integral = output.meshhistory(iMeshForGuess).result.solution.phase.integral;
     output   = gpops2(setup);
+    retryCount = retryCount+1;
 end
 
 

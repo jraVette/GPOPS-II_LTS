@@ -81,8 +81,8 @@ kt = tPlus*torqueDrivingRear + (1-tPlus)*torqueBrakingRear;
 
 T_drive_L1 = (1-kt).*(T)/(2);
 T_drive_R1 = (1-kt).*(T)/(2);
-T_drive_L2 = (kt).*(T)/(2) + kd*(omega_L2 - omega_R2);
-T_drive_R2 = (kt).*(T)/(2) - kd*(omega_L2 - omega_R2);
+T_drive_L2 = (kt).*(T)/(2);% + kd*(omega_L2 - omega_R2);
+T_drive_R2 = (kt).*(T)/(2);% - kd*(omega_L2 - omega_R2);
 
 
 
@@ -170,7 +170,7 @@ phaseout.integrand =  ((vx-100)*scaling.velocity).^2 +...
                       (ePsi*scaling.angle).^2 + ...
                       1e6*1./(sDot*scaling.velocity) + ...
                       input.auxdata.controlWeight*(u2*scaling.torque/scaling.time).^2 + ...
-                      1000*input.auxdata.controlWeight*(u1*scaling.angularVelocity).^2 + ...
+                      1e4*input.auxdata.controlWeight*(u1*scaling.angularVelocity).^2 + ...
                       (percentEnginePowerUsed.^2-1);
                   
                   

@@ -13,6 +13,8 @@ function daq = generateInitialDaq()
 %     here). Then lowered mesh iters to 3.
 %2017-02-26 9:52 - didn't like the file initial guess. Need to think on
 %     that. Going back to 5mesh iter and arbitrary initial guess to basline
+%2017-02-26 14:00 - Tried scaling again. Fixed several errors but, no
+%     better than auto scaling!
 
 %Other things to consider;
 % - maybe lower mesh tolerance way down
@@ -29,8 +31,9 @@ carFilename = '2015_Corvette_C7R.mat';
 load(carFilename);
 
 %% Track
-% trackFilename = 'SebringLoopedOptFitCtrLine.mat';
-trackFilename = 'dragStrip';
+trackFilename = 'SebringLoopedOptFitCtrLine.mat';
+refDaqFile = load('DriverA_Sebring_T7extract.mat');
+% trackFilename = 'dragStrip';
 
 track = load(trackFilename);
 track = track.track;
@@ -43,14 +46,14 @@ variableNames.units        = {'m/s';'m/s';'rad/s';'rad/s';'rad/s';'rad/s';'rad/s
 variableNames.names        = {'v_x';'v_y';'\dot{\psi}';'\omega_{L1}';'\omega_{R1}';'\omega_{L2}';'\omega_{R2}';'T';'e_y';'e_{\psi}';'\delta';'u_1';'u_2';'s'};
 
 %% MPC parameters
-horizon                 = 150;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
-controlHorizon          = 15;                                              %[m] MPC update %5m for chicane, updated based on course DOE
+horizon                 = 250;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
+controlHorizon          = 10;                                              %[m] MPC update %5m for chicane, updated based on course DOE
 interpolationAccuracy   = 0.25;                                            %[m] ds
 horizonDecrement        = 10;                                              %[m] used to shorten horizon incase of convergence error
 minimumHorizon          = 50;                                              %[m] minimum acceptable horizon
-initialDistance         = 1500;                                            %[m] s0 %I want to start well before start/finish line                                         %Where the car gets on the track
-timingDistanceStart     = 1510;                                               %Where timing starts
-timingDistanceFinish    = 2050;
+initialDistance         = refDaqFile.daq.rawData.distance.meas(1);                                            %[m] s0 %I want to start well before start/finish line                                         %Where the car gets on the track
+timingDistanceStart     = initialDistance+10;                                               %Where timing starts
+timingDistanceFinish    = refDaqFile.daq.rawData.distance.meas(end);
 finishDistance          = timingDistanceFinish+10;
 horizonRefinement       = true;
 
@@ -60,20 +63,24 @@ scaling.mass   = 1;%1/(vehicle.parameter.mass.meas);
 scaling.time   = 1;%sqrt(9.81/(vehicle.parameter.a.meas+vehicle.parameter.b.meas));
 scaling.angle  = 1;
 
+% scaling.length = 1/(vehicle.parameter.a.meas+vehicle.parameter.b.meas);
+% scaling.mass   = 1/(vehicle.parameter.mass.meas);
+% scaling.time   = sqrt(9.81/(vehicle.parameter.a.meas+vehicle.parameter.b.meas));
+% scaling.angle  = 1;
+
 scaling.velocity = scaling.length/scaling.time;
 scaling.acceleration = scaling.length/scaling.time^2;
 scaling.angularVelocity = scaling.angle/scaling.time;
 scaling.force = scaling.mass*scaling.acceleration;
 scaling.torque = scaling.force*scaling.length;
 scaling.state = [scaling.velocity scaling.velocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.angularVelocity scaling.torque scaling.length scaling.angle scaling.angle];
-% scaling.state = [1/100 1 1 .10 .10 .10 .10 .002 1/6 2 1  ];
  scaling.control = [scaling.angle/scaling.time  scaling.torque/scaling.time];
-% scaling.control = [2  0.02];
+
 
 %% Boundary conditions
-vx0 = 57.8697;%10;
-vy0 = -0.395338253366573;%0;
-r0  = -0.13345616345101;
+vx0 = refDaqFile.daq.rawData.vx.meas(1);%10;
+vy0 = refDaqFile.daq.rawData.vy.meas(1);%0;
+r0  =refDaqFile.daq.rawData.yawRate.meas(1);
 omega_front0 = vx0*(1)./vehicle.tire_front.reff.meas;
 omega_rear0  = vx0*(0.0826371923756939+1)./vehicle.tire_rear.reff.meas; 
 % omega_rear0  = vx0*(1)./vehicle.tire_rear.reff.meas; 
@@ -82,9 +89,9 @@ omega_rear0  = vx0*(0.0826371923756939+1)./vehicle.tire_rear.reff.meas;
 % T0 = 0;
 T0 = 2000;
 
-ey0 = -5.32015639132316;
-ePsi0 = -0.00184396014715744;
-delta0 = -0.000794789825159188;
+ey0 = refDaqFile.daq.rawData.ey.meas(1);
+ePsi0 = refDaqFile.daq.rawData.ePsi.meas(1);
+delta0 = refDaqFile.daq.rawData.wheelSteerAngle_L1.meas(1)*myConstants.deg2rad;
 
 x0 = [vx0 vy0 r0 omega_front0 omega_front0 omega_rear0 omega_rear0 T0 ey0 ePsi0 delta0];
 
@@ -118,16 +125,16 @@ setup.guess.phase.control = zeros(2,length(variableNames.controlNames));
 setup.guess.phase.control(1,2) = 20;
 setup.guess.phase.integral     = 0;
 % 
-% setup.guess.phase.time = setup.guess.phase.time*scaling.length;
-% setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
-% setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.control);
+setup.guess.phase.time = setup.guess.phase.time*scaling.length;
+setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
+setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.control);
 
 
 
 
 %% Bounds
 vxLb        = 20;                                                          %Original bound
-vxUb        = 200;%69.9240505593388;                                   %Original Bound
+vxUb        = 120;%69.9240505593388;                                   %Original Bound
 vyMax       = 5;                                                          %Orignal bounds
 rMax        = 55*myConstants.deg2rad;                                      %Orignal bound 45 deg/s
 omegaLb     = vxLb/vehicle.tire_front.reff.meas;                           %Just using the reff of the front should be sufficient
@@ -147,8 +154,8 @@ setup.bounds.phase.initialstate.lower = x0.*scaling.state;
 setup.bounds.phase.initialstate.upper = x0.*scaling.state;
 setup.bounds.phase.state.lower        = [vxLb  -vyMax -rMax omegaLb omegaLb omegaLb omegaLb -TMax -eyMax -ePsiMax -deltaMax].*scaling.state; 
 setup.bounds.phase.state.upper        = [vxUb   vyMax  rMax omegaUb omegaUb omegaUb omegaUb  TMax  eyMax  ePsiMax  deltaMax].*scaling.state;
-setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower.*scaling.state;
-setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper.*scaling.state;
+setup.bounds.phase.finalstate.lower   = setup.bounds.phase.state.lower;
+setup.bounds.phase.finalstate.upper   = setup.bounds.phase.state.upper;
 setup.bounds.phase.control.lower      = [ -deltaRate -TRate].*scaling.control;
 setup.bounds.phase.control.upper      = [  deltaRate  TRate].*scaling.control;
 setup.bounds.phase.path.lower         = [0*ones(1,4) ];%, -100];
@@ -180,7 +187,7 @@ setup.name                        = 'quadCar';
 setup.nlp.solver                  = 'ipopt';
 setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';
 setup.derivatives.derivativelevel = 'second';
-setup.scales.method               = 'automatic-bounds';%'automatic-guessUpdate';'automatic-hybridUpdate';'none'
+setup.scales.method               = 'automatic-hybridUpdate';%'automatic-guessUpdate';'automatic-hybridUpdate';'none'
 % 'automatic-bounds'       scales the problem from the user-supplied bounds on the variables
 % 'automatic-guess'        scales the problem once using the initial guess of the solution supplied by the user 
 % 'automatic-guessUpdate?  scales the problem from the initial guess on the first mesh and from the solution obtained on every subsequent mesh during the mesh refinement
