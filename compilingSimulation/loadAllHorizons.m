@@ -1,3 +1,7 @@
+%Script to load all horizons into a daq
+%Created 02 Feb 2018 - Jeff Anderson
+%Updated 27 Feb 2018 - Jeff Anderson - updated to new method
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 c
 global DAQ
 
@@ -13,39 +17,31 @@ for iFile = 1:length(files)
     indHorizon = strfind(files(iFile).name,horizonKeyWord);
     horizonNumber(iFile) = str2num(files(iFile).name(indHorizon+length(horizonKeyWord):indHorizon+length(horizonKeyWord)+2));
 end
+horizonNumber = unique(horizonNumber);
 
-%Load up the last one to see if we have an answer
+%Load the last master daq possible
 for iHorizon = max(horizonNumber):-1:min(horizonNumber)
-    daqToLoad = load(files(iHorizon).name);
-    if ~isempty(daqToLoad.segDaq)
-        DAQ{1} = daqToLoad.masterDaq;
+    filename = sprintf('Horizon%03i-MasterDaq.mat',horizonNumber(iHorizon));
+    if exist(filename,'file')
+        load(filename)
+        fprintf('Loading Master Daq: %s\n',displayDaqFiles(daq,'suppressOutput',true,'lookForShortFilename',false));
+        DAQ{1} = daq;
         break
-    else
-        files(iHorizon) = [];
-        horizonNumber(iHorizon) = [];
     end
 end
 
-
-for iFile = 2:length(horizonNumber)+1
-    daqToLoad = load(files(iFile-1).name);
-    fields = fieldnames(daqToLoad);
-    DAQ{iFile} = daqToLoad.segDaq;
+%Load all the horizons
+for iHorizon = 1:length(horizonNumber)
+    fprintf('Loading horizon %03i\n',horizonNumber(iHorizon));
+    filename = sprintf('Horizon%03i-OCP.mat',horizonNumber(iHorizon));
+    load(filename)
     
-    if fixDistance
-        currentDistance = daqToLoad.masterDaq.status.currentDistance;
-        DAQ{iFile}.rawData.distance.meas = DAQ{iFile}.rawData.distance.meas+currentDistance;
+    if fixDistance && isfield(daq,'rawData')
+        daq.rawData.distance.meas = daq.rawData.distance.meas+daq.gpopsSetup.auxdata.currentDistance;
     end
     
-    
-    for iField = 1:length(fields)
-        field = fields{iField};
-        if ~strcmp(field,'segDaq')
-            DAQ{iFile}.(field) = daqToLoad.(field);
-        end
-    end
-    
-    DAQ{iFile}.header.shortFilename = sprintf('Horizon%03i',horizonNumber(iFile-1));
+    daq.header.shortFilename = sprintf('Horizon%03i',horizonNumber(iHorizon));
+    DAQ{end+1} = daq;
     
 end
 
