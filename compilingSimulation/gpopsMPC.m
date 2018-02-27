@@ -35,30 +35,36 @@ while ~checkeredFlag
     
     %Update the segDaq bounds for the ocp
     setup = segDaq.header.setup;
-    setup.bounds.phase.initialtime.lower  = 0;%masterDaq.status.currentDistance; 
-    setup.bounds.phase.initialtime.upper  = 0;%masterDaq.status.currentDistance;
+    setup.bounds.phase.initialtime.lower  = 0*setup.auxdata.scaling.length;%masterDaq.status.currentDistance; 
+    setup.bounds.phase.initialtime.upper  = 0*setup.auxdata.scaling.length;%masterDaq.status.currentDistance;
     setup.bounds.phase.finaltime.lower    = masterDaq.header.horizon;%masterDaq.status.currentDistance + masterDaq.header.horizon; 
     setup.bounds.phase.finaltime.upper    = masterDaq.header.horizon;%masterDaq.status.currentDistance + masterDaq.header.horizon;
-    setup.bounds.phase.initialstate.lower = masterDaq.status.currentX0 ;
-    setup.bounds.phase.initialstate.upper = masterDaq.status.currentX0 ;
+    setup.bounds.phase.initialstate.lower = masterDaq.status.currentX0.*setup.auxdata.scaling.state ;
+    setup.bounds.phase.initialstate.upper = masterDaq.status.currentX0.*setup.auxdata.scaling.state ;
     setup.guess                           = masterDaq.status.currentGuess;
     
     %Auxdata to get current distance
     setup.auxdata.currentDistance         = masterDaq.status.currentDistance;
     segDaq.header.setup = setup;
     
-    %Snapshot filename
-    snapshotFilename = sprintf('%s_solutionSnapshot_Horizon%03i',datestr(now,'yyyy-mm-dd_HH_MM_SS'),masterDaq.status.currentSegment);
+%     %Snapshot filename
+%     snapshotFilename = sprintf('%s_solutionSnapshot_Horizon%03i',datestr(now,'yyyy-mm-dd_HH_MM_SS'),masterDaq.status.currentSegment);
     
     %Run the segment daq
-    diary([snapshotFilename '_diary']);
+    diaryFilename = sprintf('Horizon%03i-Diary',masterDaq.status.currentSegment);
+    diary([diaryFilename '_diary']);
     fprintf('HORIZON: %03i currently running....\n',masterDaq.status.currentSegment);
     [segDaq, convergence] = fourwheelMain(segDaq);
     
     %Save a snapshot of everything
-    fprintf('HORIZON: %03i complete convergence = %d.\n',masterDaq.status.currentSegment,convergence);
+    fprintf('HORIZON: %03i EXIT, convergence = %d.\n',masterDaq.status.currentSegment,convergence);
     diary off
+    snapshotFilename = sprintf('Horizon%03i-Snapshot',masterDaq.status.currentSegment);
     save(snapshotFilename)
+    justHorizonFilename = sprintf('Horizon%03i-OCP',masterDaq.status.currentSegment);
+    daq = segDaq;
+    save(justHorizonFilename,'daq');
+    
     
     %See if the problem converged
     if ~convergence
@@ -97,7 +103,7 @@ while ~checkeredFlag
     %point in the next solution
     masterDaq = removeDataFromDaqFileAtIndex(indNewX0,masterDaq);
     
-    %Update the master solution
+    %Save Update the master solution 
     masterDaq.status.currentDistance = masterDaq.status.currentDistance + masterDaq.header.controlHorizon;
     masterDaq.status.currentX0 = newX0;
     masterDaq.status.currentSegment = masterDaq.status.currentSegment + 1;
@@ -160,6 +166,11 @@ while ~checkeredFlag
     if masterDaq.status.currentDistance > masterDaq.header.finishDistance;
         checkeredFlag = true;
     end
+    
+    %Save the master daq
+    daq = masterDaq;
+    masterDaqFilename = sprintf('Horizon%03i-MasterDaq',masterDaq.status.currentSegment-1);
+    save(masterDaqFilename,'daq');
 end %While no checkered flag
 
 % [times, masterDaq] = calculateManeuveringTime(masterDaq);
