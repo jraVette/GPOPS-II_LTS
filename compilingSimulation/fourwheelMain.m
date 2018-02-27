@@ -67,7 +67,8 @@ if ismember(output.result.nlpinfo,horizonDaq.header.acceptableNlpOutpus)
         horizonDaq.header.variableNames.controlNames,...
         horizonDaq.header.variableNames.indepVarName,...
         horizonDaq.header.variableNames.units,...
-        horizonDaq.header.variableNames.names);
+        horizonDaq.header.variableNames.names,...
+        'dIndependantVariable',horizonDaq.header.interpolationAccuracy);
     tempHeader = horizonDaq.header;                          
     horizonDaq = catstruct(daqGpops,horizonDaq);
     horizonDaq.gpopsSetup = setup;
@@ -75,6 +76,9 @@ if ismember(output.result.nlpinfo,horizonDaq.header.acceptableNlpOutpus)
 
     %Calc algebraic states
     horizonDaq = calculateAlgebraicStates(horizonDaq);
+    
+    %Update the distance to the actual distance
+    horizonDaq.rawData.distance.meas = horizonDaq.rawData.distance.meas + setup.auxdata.currentDistance;    
 else
     horizonDaq.gpopsOutput = output;
     horizonDaq.gpopsSetup = setup;

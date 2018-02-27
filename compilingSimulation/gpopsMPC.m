@@ -26,35 +26,64 @@ variableNames = masterDaq.header.variableNames;
 %% Main Loop
 checkeredFlag = false;
 while ~checkeredFlag
-    %% SETUP AND RUN
-    
-    %Setup the horizon
+
+
+    %% Horizon refinement
     segDaq = [];
     segDaq.header = masterDaq.header;   
+    convergence = false;
+    iHorizonRefinement = 1;
+    segDaq.header.iHorizonRefinement = iHorizonRefinement;
+    horizon = masterDaq.header.horizon;
+    x0 = masterDaq.status.currentX0;
     
-    
-    %Update the segDaq bounds for the ocp
-    setup = segDaq.header.setup;
-    setup.bounds.phase.initialtime.lower  = 0*setup.auxdata.scaling.length;%masterDaq.status.currentDistance; 
-    setup.bounds.phase.initialtime.upper  = 0*setup.auxdata.scaling.length;%masterDaq.status.currentDistance;
-    setup.bounds.phase.finaltime.lower    = masterDaq.header.horizon;%masterDaq.status.currentDistance + masterDaq.header.horizon; 
-    setup.bounds.phase.finaltime.upper    = masterDaq.header.horizon;%masterDaq.status.currentDistance + masterDaq.header.horizon;
-    setup.bounds.phase.initialstate.lower = masterDaq.status.currentX0.*setup.auxdata.scaling.state ;
-    setup.bounds.phase.initialstate.upper = masterDaq.status.currentX0.*setup.auxdata.scaling.state ;
-    setup.guess                           = masterDaq.status.currentGuess;
-    
-    %Auxdata to get current distance
-    setup.auxdata.currentDistance         = masterDaq.status.currentDistance;
-    segDaq.header.setup = setup;
-    
-%     %Snapshot filename
-%     snapshotFilename = sprintf('%s_solutionSnapshot_Horizon%03i',datestr(now,'yyyy-mm-dd_HH_MM_SS'),masterDaq.status.currentSegment);
-    
-    %Run the segment daq
+    %Setup diary
     diaryFilename = sprintf('Horizon%03i-Diary',masterDaq.status.currentSegment);
     diary([diaryFilename '_diary']);
-    fprintf('HORIZON: %03i currently running....\n',masterDaq.status.currentSegment);
-    [segDaq, convergence] = fourwheelMain(segDaq);
+    
+    while ~convergence
+        %Update the segDaq bounds for the ocp
+        setup = segDaq.header.setup;
+        setup.bounds.phase.initialtime.lower  = 0*setup.auxdata.scaling.length;
+        setup.bounds.phase.initialtime.upper  = 0*setup.auxdata.scaling.length;
+        setup.bounds.phase.finaltime.lower    = horizon*setup.auxdata.scaling.length;
+        setup.bounds.phase.finaltime.upper    = horizon*setup.auxdata.scaling.length;
+        setup.bounds.phase.initialstate.lower = x0.*setup.auxdata.scaling.state ;
+        setup.bounds.phase.initialstate.upper = x0.*setup.auxdata.scaling.state ;
+        setup.guess                           = masterDaq.status.currentGuess;
+
+        %Auxdata to get current distance
+        setup.auxdata.currentDistance         = masterDaq.status.currentDistance;
+        segDaq.header.setup = setup;        
+        
+        fprintf('HORIZON: %03i currently running....\n',masterDaq.status.currentSegment);
+      
+        %Run the segment daq
+        
+        [segDaq, convergence] = fourwheelMain(segDaq);
+        
+        if ~convergence
+            iHorizonRefinement = iHorizonRefinement+1;
+            segDaq.header.iHorizonRefinement = iHorizonRefinement;
+            
+            %Back the solution up and lengthen the horizon
+            currentDistance = masterDaq.status.currentDistance;
+            currentDistance = currentDistance - masterDaq.header.controlHorizon;
+            horizon = horizon + masterDaq.header.controlHorizon;
+            
+            %Find the new x0
+            indCurrentDistance = find(currentDistance == masterDaq.rawData.distance.meas);
+            newX0daq = assembleNewDaqAtIndicies(indCurrentDistance,masterDaq,'normalizeIndepVarChannels',false);
+            newX0 = writeDaqChannelsToMatrix(newX0daq,'selectedChannels',variableNames.stateNames);
+            
+            %Rewind the master daq solution
+             masterDaq = removeDataFromDaqFileAtIndex(indCurrentDistance:length(masterDaq.rawData.distance.meas),masterDaq);
+             
+            
+            
+            
+        end
+    end
     
     %Save a snapshot of everything
     fprintf('HORIZON: %03i EXIT, convergence = %d.\n',masterDaq.status.currentSegment,convergence);
@@ -75,9 +104,6 @@ while ~checkeredFlag
     %% Update Master Solution
     %If it converged we got here. Next we need to update the master
     %solution. First grab the data just over the MPC update interval
-%     ind = findDaqIndForConditions(['distance>=' num2str(masterDaq.status.currentDistance) ...
-%                                    '& distance<=' num2str(masterDaq.status.currentDistance + masterDaq.header.controlHorizon)],...
-%                                    segDaq);
     ind = findDaqIndForConditions(['distance>=0 & distance<=' num2str(masterDaq.header.controlHorizon)],...
                                    segDaq);
     mpcIntervalDaq = assembleNewDaqAtIndicies(ind,segDaq,'normalizeIndepVarChannels',false);
