@@ -15,7 +15,7 @@ output = daq.gpopsOutput;
 
 solutionField = 'interpsolution'; %field in the gpops results output.results.(solutionField) originally just solution but looks like the interpsol is more what I need.
 
-input.phase.time = output.result.(solutionField).phase.time;
+input.phase.time = output.result.(solutionField).phase.time - output.result.(solutionField).phase.time(1);
 input.phase.state = output.result.(solutionField).phase.state;
 input.phase.control = output.result.(solutionField).phase.control;
 
@@ -55,7 +55,11 @@ while count<100 && retryFlag
 end
 !rm temp.m
 algebraicStates = fieldnames(phaseout.algebraicStates);
+S = daq.rawData.distance.meas-daq.rawData.distance.meas(1);
 for i = 1:length(algebraicStates)
     ch = algebraicStates{i};
-    daq.rawData = addMathChannelsThatAreStandardChannels(daq.rawData,ch,phaseout.algebraicStates.(ch).meas,'','','suppressWarning',true);
+    
+    %Need to reinterpolate them to the output
+    data = interp1(input.phase.time,phaseout.algebraicStates.(ch).meas,S);
+    daq.rawData = addMathChannelsThatAreStandardChannels(daq.rawData,ch,data,'','','suppressWarning',true);
 end

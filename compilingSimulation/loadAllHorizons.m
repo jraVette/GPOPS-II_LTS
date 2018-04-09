@@ -36,9 +36,9 @@ for iHorizon = 1:length(horizonNumber)
     filename = sprintf('Horizon%03i-OCP.mat',horizonNumber(iHorizon));
     load(filename)
     
-    if fixDistance && isfield(daq,'rawData')
-        daq.rawData.distance.meas = daq.rawData.distance.meas+daq.gpopsSetup.auxdata.currentDistance;
-    end
+%     if fixDistance && isfield(daq,'rawData')
+%         daq.rawData.distance.meas = daq.rawData.distance.meas+daq.gpopsSetup.auxdata.currentDistance;
+%     end
     
     daq.header.shortFilename = sprintf('Horizon%03i',horizonNumber(iHorizon));
     DAQ{end+1} = daq;

@@ -15,7 +15,7 @@ fullVehicleFile = fullfile(vehicleDirectory,'Corvette',carFilename);
 % carFileName = 'LimebeerF1Car.mat';
 % fullVehicleFile = fullfile(vehicleDirectory,'Optimal Control Research',carFileName);
 load(fullVehicleFile);
-fx_L1 = simplifiedPacejka(2000,0,kappa,vehicle.tire_front.coeff.meas);
+[fx_L1, Fy, muX, muY, FxMax, FyMax, kappa_n] = simplifiedPacejka(2000,0,kappa,vehicle.tire_front.coeff.meas);
 
 hold all;plot(kappa,fx_L1);
 
@@ -47,3 +47,6 @@ FX = muX_max.*Fz.*kappa_n/(rho+eps).*sin(coeff.Qx*atan(Sx*rho))
 
 hold all;
 plot(kappa,FX)
+
+
+figure;plot(kappa_n,FX)

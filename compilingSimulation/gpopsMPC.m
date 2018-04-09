@@ -30,7 +30,7 @@ while ~checkeredFlag
 
     %% Horizon refinement
     segDaq = [];
-    segDaq.header = masterDaq.header;   
+
     convergence = false;
     iHorizonRefinement = 1;
     segDaq.header.iHorizonRefinement = iHorizonRefinement;
@@ -43,8 +43,9 @@ while ~checkeredFlag
     
     while ~convergence
         %Update the segDaq bounds for the ocp
+        segDaq.header = masterDaq.header; 
         setup = segDaq.header.setup;
-        setup.bounds.phase.initialtime.lower  = 0*setup.auxdata.scaling.length;
+        setup.bounds.phase.initialtime.lower  = 0*setup.auxdata.scaling.length;1
         setup.bounds.phase.initialtime.upper  = 0*setup.auxdata.scaling.length;
         setup.bounds.phase.finaltime.lower    = horizon*setup.auxdata.scaling.length;
         setup.bounds.phase.finaltime.upper    = horizon*setup.auxdata.scaling.length;
@@ -60,36 +61,55 @@ while ~checkeredFlag
       
         %Run the segment daq
         
-        [segDaq, convergence] = fourwheelMain(segDaq);
+        [segDaq, convergence] = fourwheelMain(segDaq,'calcAlgebraicStates',false,'saveSnapshotofShortSeg',[]);
         
-        if ~convergence
+        if ~convergence && iHorizonRefinement <= 3 && masterDaq.status.currentSegment > 1
             iHorizonRefinement = iHorizonRefinement+1;
             segDaq.header.iHorizonRefinement = iHorizonRefinement;
             
             %Back the solution up and lengthen the horizon
-            currentDistance = masterDaq.status.currentDistance;
-            currentDistance = currentDistance - masterDaq.header.controlHorizon;
-            horizon = horizon + masterDaq.header.controlHorizon;
+            masterDaq.status.currentDistance = masterDaq.status.currentDistance - masterDaq.header.controlHorizon/4;
+%             horizon = horizon + masterDaq.header.controlHorizon;
             
             %Find the new x0
-            indCurrentDistance = find(currentDistance == masterDaq.rawData.distance.meas);
+            indCurrentDistance = find(masterDaq.status.currentDistance == masterDaq.rawData.distance.meas);
             newX0daq = assembleNewDaqAtIndicies(indCurrentDistance,masterDaq,'normalizeIndepVarChannels',false);
-            newX0 = writeDaqChannelsToMatrix(newX0daq,'selectedChannels',variableNames.stateNames);
+            x0 = writeDaqChannelsToMatrix(newX0daq,'selectedChannels',variableNames.stateNames);
+            masterDaq.status.currentX0 = x0;
             
             %Rewind the master daq solution
-             masterDaq = removeDataFromDaqFileAtIndex(indCurrentDistance:length(masterDaq.rawData.distance.meas),masterDaq);
-             
+            masterDaq = removeDataFromDaqFileAtIndex(indCurrentDistance:length(masterDaq.rawData.distance.meas),masterDaq);
             
+            %Update the guess
+            previousHorizonDaq = load(sprintf('Horizon%03i-OCP.mat',masterDaq.status.currentSegment-1));
+            previousHorizonDaq = previousHorizonDaq.daq;
+            lastHorizonDistances = previousHorizonDaq.gpopsOutput.result.solution.phase.time+previousHorizonDaq.gpopsSetup.auxdata.currentDistance;
+            indOfLastHorizonForGuess = findNearestPoint(lastHorizonDistances,masterDaq.status.currentDistance);
+            nextGuess.phase.time    = [previousHorizonDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess:end)-previousHorizonDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess);  masterDaq.header.horizon];
+            nextGuess.phase.state   = [previousHorizonDaq.gpopsOutput.result.solution.phase.state(indOfLastHorizonForGuess:end,:); previousHorizonDaq.gpopsOutput.result.solution.phase.state(end,:)];
+            nextGuess.phase.control = [previousHorizonDaq.gpopsOutput.result.solution.phase.control(indOfLastHorizonForGuess:end,:); zeros(1,length(masterDaq.header.variableNames.controlNames))];
             
+            nextGuess.phase.integral= previousHorizonDaq.gpopsOutput.result.solution.phase.integral;            
+            masterDaq.status.currentGuess = nextGuess;
+        elseif ~convergence && horizon >= masterDaq.header.horizonRefinementMinHorizon;
+            iHorizonRefinement = iHorizonRefinement+1;
+            segDaq.header.iHorizonRefinement = iHorizonRefinement;
             
+            %Back the solution up and lengthen the horizon
+            horizon = horizon - masterDaq.header.horizonRefinementDecrement;            
+        elseif ~convergence
+            warning('HORIZON REFINEMENT FAILED - EXITING')
+            break
         end
+        
+        
     end
     
     %Save a snapshot of everything
     fprintf('HORIZON: %03i EXIT, convergence = %d.\n',masterDaq.status.currentSegment,convergence);
     diary off
-    snapshotFilename = sprintf('Horizon%03i-Snapshot',masterDaq.status.currentSegment);
-    save(snapshotFilename)
+%     snapshotFilename = sprintf('Horizon%03i-Snapshot',masterDaq.status.currentSegment);
+%     save(snapshotFilename)
     justHorizonFilename = sprintf('Horizon%03i-OCP',masterDaq.status.currentSegment);
     daq = segDaq;
     save(justHorizonFilename,'daq');
@@ -104,20 +124,30 @@ while ~checkeredFlag
     %% Update Master Solution
     %If it converged we got here. Next we need to update the master
     %solution. First grab the data just over the MPC update interval
-    ind = findDaqIndForConditions(['distance>=0 & distance<=' num2str(masterDaq.header.controlHorizon)],...
-                                   segDaq);
+%     ind = findDaqIndForConditions(['distance>=' sprintf('%f',masterDaq.status.currentDistance) ...
+%                                    '& distance<=' sprintf('%f',masterDaq.status.currentDistance + masterDaq.header.controlHorizon)],...
+%                                    segDaq);
+    ind = [1:findNearestPoint(masterDaq.status.currentDistance + masterDaq.header.controlHorizon,segDaq.rawData.distance.meas)];
     mpcIntervalDaq = assembleNewDaqAtIndicies(ind,segDaq,'normalizeIndepVarChannels',false);
-    mpcIntervalDaq.rawData.distance.meas = mpcIntervalDaq.rawData.distance.meas + masterDaq.status.currentDistance;
+%     mpcIntervalDaq.rawData.distance.meas = mpcIntervalDaq.rawData.distance.meas + masterDaq.status.currentDistance;
     
     %Put it in the daq file
     if ~isfield(masterDaq,'rawData')                                       %If there isn't a rawData field, we need to start it
         masterDaq.rawData = mpcIntervalDaq.rawData;
+        masterDaq.rawData = addMathChannelsThatAreStandardChannels(masterDaq.rawData,'mpcHorizon',ones(size(mpcIntervalDaq.rawData.(variableNames.indepVarName).meas)));
     else
         channels = daqChannels(segDaq);
         for iCh = 1:size(channels,1) 
             ch = channels{iCh};
             masterDaq.rawData.(ch).meas = [masterDaq.rawData.(ch).meas; mpcIntervalDaq.rawData.(ch).meas];
         end
+        masterDaq.rawData.mpcHorizon.meas =  [masterDaq.rawData.mpcHorizon.meas; masterDaq.status.currentSegment*ones(size(mpcIntervalDaq.rawData.(variableNames.indepVarName).meas))];
+    end
+    
+    %See when we skip a beat
+    if length(unique(diff(masterDaq.rawData.distance.meas))) >1
+        save('snap.mat')
+        error('got some issues')
     end
     
     %Now grab the last index as the starting point of the next
@@ -161,13 +191,13 @@ while ~checkeredFlag
 %     nextGuess.phase.integral     = 0;    
     
         
-      %Based off previous horizon: grab the last horizon, shift for the mpc
-      %update interval and then tack on some zeros
-      indOfLastHorizonForGuess = findNearestPoint(segDaq.gpopsOutput.result.solution.phase.time,masterDaq.header.controlHorizon);
-      nextGuess.phase.time    = [segDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess:end)-segDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess);  masterDaq.header.horizon];
-      nextGuess.phase.state   = [segDaq.gpopsOutput.result.solution.phase.state(indOfLastHorizonForGuess:end,:); segDaq.gpopsOutput.result.solution.phase.state(end,:)];
-      nextGuess.phase.control = [segDaq.gpopsOutput.result.solution.phase.control(indOfLastHorizonForGuess:end,:); zeros(1,length(masterDaq.header.variableNames.controlNames))];
-      nextGuess.phase.integral= segDaq.gpopsOutput.result.solution.phase.integral;
+%       %Based off previous horizon: grab the last horizon, shift for the mpc
+%       %update interval and then tack on some zeros
+%       indOfLastHorizonForGuess = findNearestPoint(segDaq.gpopsOutput.result.solution.phase.time,masterDaq.header.controlHorizon);
+%       nextGuess.phase.time    = [segDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess:end)-segDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess);  masterDaq.header.horizon];
+%       nextGuess.phase.state   = [segDaq.gpopsOutput.result.solution.phase.state(indOfLastHorizonForGuess:end,:); segDaq.gpopsOutput.result.solution.phase.state(end,:)];
+%       nextGuess.phase.control = [segDaq.gpopsOutput.result.solution.phase.control(indOfLastHorizonForGuess:end,:); zeros(1,length(masterDaq.header.variableNames.controlNames))];
+%       nextGuess.phase.integral= segDaq.gpopsOutput.result.solution.phase.integral;
       
       %Make it a sparse guess
 %       nextGuess.phase.time    = [segDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess)-segDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess); segDaq.gpopsOutput.result.solution.phase.time(end)-segDaq.gpopsOutput.result.solution.phase.time(indOfLastHorizonForGuess);  masterDaq.header.horizon];
@@ -185,7 +215,7 @@ while ~checkeredFlag
     
     
     
-    masterDaq.status.currentGuess = nextGuess;
+%     masterDaq.status.currentGuess = nextGuess;
    
     
     %See if we should end lap sim

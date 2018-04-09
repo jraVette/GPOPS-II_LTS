@@ -68,8 +68,8 @@ muX = muX_max.*sin(coeff.Qx*atan(Sx*rho));
 muY = muY_max.*sin(coeff.Qy*atan(Sy*rho));
 
 
-Fx = muX.*Fz.*kappa_n./(rho+eps);
-Fy = muY.*Fz.*alpha_n./(rho+eps); %use eps to eliemitae nan is /0
+Fx = muX.*Fz.*kappa_n./(rho+1e-16);
+Fy = muY.*Fz.*alpha_n./(rho+1e-16); %use eps to eliemitae nan is /0
 
 
 efficiency = sqrt((Fx./FxMax).^2 + (Fy./FyMax).^2);

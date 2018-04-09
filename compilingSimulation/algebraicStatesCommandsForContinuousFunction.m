@@ -2,11 +2,27 @@
 %calculateAlgebraicStates.m to return the values of the algebraic states.
 %If you include them natively, it slows the optimizaiton time
 %significantly by the size the of the algebraic states saved.
+phaseout.algebraicStates.horizonDistance.meas = s;
 
 phaseout.algebraicStates.sa_L1.meas = alpha_L1;
 phaseout.algebraicStates.sa_R1.meas = alpha_R1;
 phaseout.algebraicStates.sa_L2.meas = alpha_L2;
 phaseout.algebraicStates.sa_R2.meas = alpha_R2;
+
+phaseout.algebraicStates.pathContraintVertBal.meas = phaseout.path(:,1);
+phaseout.algebraicStates.pathContraintXMomBal.meas = phaseout.path(:,2);
+phaseout.algebraicStates.pathContraintYMomBal.meas = phaseout.path(:,3);
+phaseout.algebraicStates.pathContraintRoll.meas = phaseout.path(:,4);
+% phaseout.algebraicStates.pathContraintBrakeTorque.meas = phaseout.path(:,5);
+% phaseout.algebraicStates.pathContraintDiff.meas = phaseout.path(:,6);
+% phaseout.algebraicStates.pathContraintEng.meas = phaseout.path(:,5);
+
+
+
+phaseout.algebraicStates.omega_L1.meas = omega_L1;
+phaseout.algebraicStates.omega_R1.meas = omega_R1;
+phaseout.algebraicStates.omega_L2.meas = omega_L2;
+phaseout.algebraicStates.omega_R2.meas = omega_R2;
 
 phaseout.algebraicStates.slipRatio_L1.meas = kappa_L1;
 phaseout.algebraicStates.slipRatio_R1.meas = kappa_R1;
@@ -69,15 +85,15 @@ phaseout.algebraicStates.FY.meas = FY;
 phaseout.algebraicStates.ax.meas = FX./m;
 phaseout.algebraicStates.ay.meas = FY./m;
 
-phaseout.algebraicStates.T_drive_L1.meas = T_drive_L1;
-phaseout.algebraicStates.T_drive_R1.meas = T_drive_R1;
-phaseout.algebraicStates.T_drive_L2.meas = T_drive_L2;
-phaseout.algebraicStates.T_drive_R2.meas = T_drive_R2;
+% phaseout.algebraicStates.T_drive_L1.meas = T_drive_L1;
+% phaseout.algebraicStates.T_drive_R1.meas = T_drive_R1;
+% phaseout.algebraicStates.T_drive_L2.meas = T_drive_L2;
+% phaseout.algebraicStates.T_drive_R2.meas = T_drive_R2;
 
-phaseout.algebraicStates.kt.meas = kt;
-phaseout.algebraicStates.diffTorqueTransfer.meas = kd*(omega_L2 - omega_R2);
-phaseout.algebraicStates.tPlus.meas =tPlus;
-phaseout.algebraicStates.tMinus.meas =(1-tPlus);
+% phaseout.algebraicStates.kt.meas = kt;
+% phaseout.algebraicStates.diffTorqueTransfer.meas = kd*(omega_L2 - omega_R2);
+% phaseout.algebraicStates.tPlus.meas =tPlus;
+% phaseout.algebraicStates.tMinus.meas =(1-tPlus);
 
 phaseout.algebraicStates.enginePercent.meas = percentEnginePowerUsed;
 

@@ -1,5 +1,5 @@
 %% Create adigator files
-daq = generateInitialDaq();
+daq = generateInitialDaq('loadGuess',false);
 setup = daq.header.setup;
 setup.functions.continuous        = @fourwheelContinuous;
 setup.functions.endpoint          = @fourwheelEndpoint;
