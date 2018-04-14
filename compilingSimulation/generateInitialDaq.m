@@ -32,11 +32,11 @@ variableNames.units        = {'m/s';'m/s';'rad/s';     'm';' rad';'s';      'rad
 variableNames.names        = {'v_x';'v_y';'\dot{\psi}';'e_y';'e_{\psi}';'time';'\delta';'\kappa_{L1}';'\kappa_{R1}';'\kappa_{L2}';'\kappa_{R2}';'fz_{L1}';'fz_{R1}';'fz_{L2}';'fz_{R2}';'distance'};
 
 %% MPC parameters
-horizon                 = 500;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
-controlHorizon          = 50;                                              %[m] MPC update %5m for chicane, updated based on course DOE
+horizon                 = 300;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
+controlHorizon          = 60;                                              %[m] MPC update %5m for chicane, updated based on course DOE
 interpolationAccuracy   = 0.25;                                            %[m] ds
 horizonDecrement        = 5;                                              %[m] used to shorten horizon incase of convergence error
-minimumHorizon          = 1200;                                              %[m] minimum acceptable horizon
+minimumHorizon          = 50;                                              %[m] minimum acceptable horizon
 initialDistance         = 4565;                                            %[m] s0 %I want to start well before start/finish line                                         %Where the car gets on the track
 timingDistanceStart     = 4565;                                               %Where timing starts
 timingDistanceFinish    = 5859;
@@ -153,7 +153,7 @@ setup.nlp.ipoptoptions.maxiterations = 1000;
 
 setup.mesh.method       = 'hp-PattersonRao';
 setup.mesh.tolerance    = 1e-3;
-setup.mesh.maxiterations = 3;
+setup.mesh.maxiterations = 4;
 nFrac = 4;
 setup.mesh.phase.fraction = 1/nFrac*ones(1,nFrac);
 setup.mesh.phase.colpoints = 4*ones(1,nFrac);

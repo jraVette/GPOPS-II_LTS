@@ -1,0 +1,24 @@
+#!/bin/bash
+
+# The puspose of this script is to see what scripts actuall failed
+
+#echo "Filename, Gen ,Iter,Repeat,StartDate, StartTime, CheckInDate, CheckInTime, ElapsedTime, Distance,  Fin,   LapTime, Conv"
+echo "Filename             , CurrentDis, SimFinish , LapTime , Conv"
+statFiles=$(find . -name stat.txt)
+for iFile in $statFiles; do    
+  # generationNumber=${iFile:9:4}
+  # iterateNumber=${iFile:19:4}
+  # repeatNumber=${iFile:30:2}
+   simStarted=$(grep 'Sim Started' $iFile | awk '{gsub(/[^0-9. ]/,"")}1')
+   lastCheckIn=$(grep 'Last Check In' $iFile | awk '{gsub(/[^0-9. ]/,"")}1')
+   elapsedTime=$(grep 'Elapsed Time' $iFile | awk '{gsub(/[^0-9. ]/,"")}1')
+   currentDistance=$(grep 'Current Distance' $iFile | awk '{gsub(/[^0-9. ]/,"")}1')
+   simFinishedFlag=$(grep 'Simulation Finished' $iFile | awk '{gsub(/[^0-9. ]/,"")}1')
+   lapTime=$(grep 'Lap Time' $iFile | awk '{gsub(/[^0-9. ]/,"")}1')
+   convergenceFlag=$(grep 'Convergence' $iFile | awk '{gsub(/[^0-9. ]/,"")}1')
+
+
+printf "%20s, %10s,%10s,%10s,%10s,%10s \n" $iFile $currentDistance $simFinishedFlag $lapTime $convergenceFlag, $elapsedTime      
+
+   
+done
