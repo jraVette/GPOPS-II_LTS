@@ -116,7 +116,7 @@ setup.auxdata.currentDistance           = initialDistance;
 setup.auxdata.controlCost               = [1.5e1 2e-1 2e-1 2e-1 2e-1 2e-11 2e-11 2e-11 2e-11];
 setup.auxdata.regularizationCost        = 1e-0;%was 1e-2
 
-% setup.auxdata.controlCost               = [1e2 2e0 2e0 2e0 2e0 2e-11 2e-11 2e-11 2e-11];
+setup.auxdata.controlCost               = [1e2 2e0 2e0 2e0 2e0 2e-11 2e-11 2e-11 2e-11];
 % setup.auxdata.regularizationCost        = 1e-0;%was 1e-2
 setup.auxdata.engMult                   = 0.9;
 setup.auxdata.muMultX                   = 0.58;

@@ -6,7 +6,7 @@ c
 
 
 %Flags and constants
-nRepeats = 1;                                                              %How many of each iterate to run
+nRepeats = 10;                                                              %How many of each iterate to run
 setupEachIterateDirectory   = true;                                        %true or false, true will create a folder in the ./currentlyRunning folder for each iterate, false will just setup the DAQ files and create a summary results .mat file
 currentlyRunningDirectory   = 'currentlyRunning';                          %Name of the currently running directory
 
@@ -71,6 +71,11 @@ doe = {...
       'header.setup.mesh.colpointsmax'        [1     2     10   4      2     3  10 ]};
 };
 
+%REV08 vx Let's see
+doe = {...
+    {'header.horizon'             [300] 
+     'header.controlHorizon'      [60]}; %Horizon DOE
+}
 
         
 %Setup each daq DOE

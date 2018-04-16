@@ -7,9 +7,10 @@ function output = fourwheelEndpoint(input)
 integral = input.phase(1).integral;
 % terminalCosts = sum(((input.auxdata.terminalCost.targetState - input.phase.finalstate)./input.auxdata.terminalCost.scaling).^2)/length(input.phase.finalstate) ;
 % output.objective = integral + terminalCosts*input.auxdata.terminalCost.weight;
-
+vxf = input.phase.finalstate(1);
 tf = input.phase.finalstate(end);
-output.objective = tf + input.auxdata.regularizationCost*integral;
+% output.objective = tf + input.auxdata.regularizationCost*integral;
+output.objective = -vxf + input.auxdata.regularizationCost*integral;
 
 
 % output.eventgroup.event = [input.phase.finalstate - input.phase.initialstate];

@@ -38,7 +38,7 @@ for i = 1:length(DAQ)
     subplot(1,2,2);
 
     tf = x(end,end);
-    
+    vxf = x(end,1);
     allCostComponents = [tf daq.header.setup.auxdata.regularizationCost*sum(costTerms)];
     pie(allCostComponents/sum(allCostComponents),{'Min Time','Regularization'});
     title('Cost Fcn')
@@ -46,7 +46,7 @@ for i = 1:length(DAQ)
     
         disp(' ');
     disp('_____________________________')
-    disp('TOTAL COST')
+    disp('TOTAL COST - Time')
     disp(' ');
     fprintf('Min Time Term: %f\n',tf);
     fprintf('Regularization: %f\n', allCostComponents(end))
@@ -54,7 +54,16 @@ for i = 1:length(DAQ)
     disp(' ');    
     disp('_____________________________')
     disp(' ');    
-    
+            disp(' ');
+    disp('_____________________________')
+    disp('TOTAL COST - Velocity')
+    disp(' ');
+    fprintf('Max Velocity Term: %f\n',vxf);
+    fprintf('Regularization: %f\n', allCostComponents(end))
+    fprintf('Total Cost: %f\n', sum(allCostComponents))
+    disp(' ');    
+    disp('_____________________________')
+    disp(' ');    
 
 
     
