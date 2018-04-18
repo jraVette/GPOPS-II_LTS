@@ -59,6 +59,8 @@ while ~checkeredFlag
 
         %Auxdata to get current distance
         setup.auxdata.currentDistance         = masterDaq.status.currentDistance;
+        setup.auxdata.costTime                = masterDaq.header.switchingDaq.rawData.switching.meas(masterDaq.status.currentSegment,1);
+        setup.auxdata.costVx                  = masterDaq.header.switchingDaq.rawData.switching.meas(masterDaq.status.currentSegment,2);
         segDaq.header.setup = setup;        
         
         fprintf('HORIZON: %03i currently running....\n',masterDaq.status.currentSegment);
@@ -67,7 +69,9 @@ while ~checkeredFlag
         
         [segDaq, convergence] = fourwheelMain(segDaq,'calcAlgebraicStates',false,'saveSnapshotofShortSeg',[]);
         
-        if ~convergence && horizon-masterDaq.header.horizonDecrement >= masterDaq.header.minimumHorizon
+        if ~convergence && ...
+           masterDaq.header.horizonRefinement && ...
+           horizon-masterDaq.header.horizonDecrement >= masterDaq.header.minimumHorizon
             iHorizonRefinement = iHorizonRefinement+1;
             segDaq.header.iHorizonRefinement = iHorizonRefinement;
             

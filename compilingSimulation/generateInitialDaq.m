@@ -31,6 +31,9 @@ variableNames.controlNames = {'delta';'kappa_L1';'kappa_R1';'kappa_L2';'kappa_R2
 variableNames.units        = {'m/s';'m/s';'rad/s';     'm';' rad';'s';      'rad';  '';        '';        '';        '';        'N';    'N';    'N';     'N'; 'm'};
 variableNames.names        = {'v_x';'v_y';'\dot{\psi}';'e_y';'e_{\psi}';'time';'\delta';'\kappa_{L1}';'\kappa_{R1}';'\kappa_{L2}';'\kappa_{R2}';'fz_{L1}';'fz_{R1}';'fz_{L2}';'fz_{R2}';'distance'};
 
+
+clear s c %don't need them
+
 %% MPC parameters
 horizon                 = 300;                                             %[m] Look ahead %150m for chicane, updated based on course DOE
 controlHorizon          = 60;                                              %[m] MPC update %5m for chicane, updated based on course DOE
@@ -41,7 +44,29 @@ initialDistance         = 4565;                                            %[m] 
 timingDistanceStart     = 4565;                                               %Where timing starts
 timingDistanceFinish    = 5859;
 finishDistance          = timingDistanceFinish+10;
-horizonRefinement       = true;
+horizonRefinement       = false;
+
+
+%% Setup switching
+s                       = [-100 1*10000]';                                 %just big numbers so it spans the track
+c                       = [0 0]';                                          %time optimal switching
+switchingDaq.rawData.distance = createDaqChannelData(s,'m','Distance');
+switchingDaq.rawData.switching = createDaqChannelData(c,'','Switching');
+
+s = initialDistance:controlHorizon:finishDistance;
+     %'time cost vx cost'},...
+c0  = [ 1        0];
+lb0 = [ 0        0 ];
+ub0 = [ 1        1 ];
+c  = repmat(c0,length(s),[]);
+lb = repmat(lb0,length(s),[]);
+ub = repmat(ub0,length(s),[]);
+
+switchingDaq.rawData.distance = createDaqChannelData(s,'m','Distance');
+switchingDaq.rawData.switching = createDaqChannelData(c,'','Switching');
+switchingDaq.rawData.lb = createDaqChannelData(lb,'','Switching Lower Bounds');
+switchingDaq.rawData.ub = createDaqChannelData(ub,'','Switching Upper Bounds');
+clear s c c0 lb ub lb0 ub0%don't need them
 
 %% Scaling
 scaling.length = 1;%1/(vehicle.parameter.a.meas+vehicle.parameter.b.meas);
@@ -101,8 +126,8 @@ setup.bounds.phase.control.lower      = [ -deltaMax 0        0        kappaMin k
 setup.bounds.phase.control.upper      = [  deltaMax kappaMax kappaMax kappaMax kappaMax fzMax fzMax fzMax fzMax].*scaling.control;
 setup.bounds.phase.path.lower         = [0*ones(1,6) 0 ];
 setup.bounds.phase.path.upper         = [0*ones(1,6) 1];
-setup.bounds.phase.integral.lower     =  0;
-setup.bounds.phase.integral.upper     =  1e8;
+setup.bounds.phase.integral.lower     =  [0   0];
+setup.bounds.phase.integral.upper     =  [1e8 1e8];
 
 %% Auxdata - put this here so I can use bounds
 setup.auxdata.variableNames             = variableNames;
@@ -116,12 +141,15 @@ setup.auxdata.currentDistance           = initialDistance;
 setup.auxdata.controlCost               = [1.5e1 2e-1 2e-1 2e-1 2e-1 2e-11 2e-11 2e-11 2e-11];
 setup.auxdata.regularizationCost        = 1e-0;%was 1e-2
 
-setup.auxdata.controlCost               = [1e2 2e0 2e0 2e0 2e0 2e-11 2e-11 2e-11 2e-11];
-% setup.auxdata.regularizationCost        = 1e-0;%was 1e-2
+setup.auxdata.controlCostVx             = [1e2 2e0 2e0 2e0 2e0 2e-11 2e-11 2e-11 2e-11];
+setup.auxdata.regularizationCostVx      = 1e-0;%was 1e-2
+setup.auxdata.tCostScale                = 1;%30;
+setup.auxdata.vxCostScale               = 1;%-70;
 setup.auxdata.engMult                   = 0.9;
 setup.auxdata.muMultX                   = 0.58;
 setup.auxdata.muMultY                   = 1.6;
-
+setup.auxdata.costTime                  = 0; %Note gpopsMPC will overwrite this, need it to compile adigator
+setup.auxdata.costVx                    = 1; %Note gpopsMPC will overwrite this, need it to compile adigator
 % vxTarget = 100;
 % setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0 0];
 % setup.auxdata.stageCost.scaling         = [1        1 1 0       0       0       0       0 1 1 0];
@@ -199,11 +227,11 @@ if loadGuess
 
     %Near arbitrary initial guess
     setup.guess.phase.time    = [0; finishDistance-initialDistance];
-    setup.guess.phase.state   = [x0; x0];
+    setup.guess.phase.state   = [x0; [x0(1:end-1) 5]];
     setup.guess.phase.control = ...
         [0 0.00 0.00 0.00 0.00 wf wf wr wr
          0 0.00 0.00 0.00 0.00 wf wf wr wr];
-    setup.guess.phase.integral     = 0;
+    setup.guess.phase.integral     = [0 0];
     
     setup.guess.phase.time = setup.guess.phase.time*scaling.length;
     setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);

@@ -6,7 +6,7 @@ c
 
 
 %Flags and constants
-nRepeats = 10;                                                              %How many of each iterate to run
+nRepeats = 50;                                                              %How many of each iterate to run
 setupEachIterateDirectory   = true;                                        %true or false, true will create a folder in the ./currentlyRunning folder for each iterate, false will just setup the DAQ files and create a summary results .mat file
 currentlyRunningDirectory   = 'currentlyRunning';                          %Name of the currently running directory
 
@@ -75,9 +75,29 @@ doe = {...
 doe = {...
     {'header.horizon'             [300] 
      'header.controlHorizon'      [60]}; %Horizon DOE
-}
+};
 
-        
+%REV09 Switching daq, just run some repeats of vx optimal and t optimal
+%first shot and make sure they line up with the DOE reasonably:
+tempDaq = generateInitialDaq;
+tSwitching = tempDaq.header.switchingDaq.rawData.switching.meas;
+vSwitching = fliplr(tSwitching);
+tempDaq.header.switchingDaq.rawData.switching.meas
+doe = {...
+    {'header.switchingDaq.rawData.switching.meas'             {tSwitching vSwitching} };
+};
+    
+
+%REV10 re-testing the velocity optimal solutions
+doe = {...
+    {'header.setup.mesh.maxiterations', [1 1 2 2 3 3 4 4 4 4 4]};
+    {'header.setup.mesh.colpointsmin'   [2 2 2 2 2 4 2 2 3 4 4]
+     'header.setup.mesh.colpointsmax'   [2 4 2 4 2 4 2 4 4 5 7]};
+};
+
+
+
+
 %Setup each daq DOE
 addpath('compilingSimulation/')
 fprintf('Number of master experiments = %i\n',numel(doe))
@@ -96,7 +116,11 @@ for i = 1:numel(doe)
                 temp = value;
                 clear value
                 value = temp{1};
-                value = ['''' value ''''];
+                if isa(value,'char');
+                    value = ['''' value ''''];
+                else
+                    value = mat2str(value);
+                end
             else
                 value = num2str(value);
             end

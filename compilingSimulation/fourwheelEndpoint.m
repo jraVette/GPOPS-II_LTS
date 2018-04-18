@@ -2,17 +2,23 @@
 % BEGIN: function particleMotionEndpoint.m %
 %-------------------------------------------%
 function output = fourwheelEndpoint(input)
-% cost = input.auxdata.cost;
+costTime = input.auxdata.costTime;
+costVx = input.auxdata.costVx;
+
 % %Objective
 integral = input.phase(1).integral;
 % terminalCosts = sum(((input.auxdata.terminalCost.targetState - input.phase.finalstate)./input.auxdata.terminalCost.scaling).^2)/length(input.phase.finalstate) ;
 % output.objective = integral + terminalCosts*input.auxdata.terminalCost.weight;
 vxf = input.phase.finalstate(1);
 tf = input.phase.finalstate(end);
-% output.objective = tf + input.auxdata.regularizationCost*integral;
-output.objective = -vxf + input.auxdata.regularizationCost*integral;
+J_tf =    tf + input.auxdata.regularizationCost*integral(1);
+J_vx =  -vxf + input.auxdata.regularizationCostVx*integral(2);
 
+% output.objective = cost*J_vx/input.auxdata.vxCostScale + (1-cost)*J_tf/input.auxdata.tCostScale;
 
+% output.objective = 0*J_tf + 1*J_vx;
+output.objective = 1*J_vx;
+% output.objective = costVx*J_vx;% + costTime;
 % output.eventgroup.event = [input.phase.finalstate - input.phase.initialstate];
 
 end
