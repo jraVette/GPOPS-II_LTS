@@ -11,14 +11,16 @@ integral = input.phase(1).integral;
 % output.objective = integral + terminalCosts*input.auxdata.terminalCost.weight;
 vxf = input.phase.finalstate(1);
 tf = input.phase.finalstate(end);
-J_tf =    tf + input.auxdata.regularizationCost*integral(1);
-J_vx =  -vxf + input.auxdata.regularizationCostVx*integral(2);
+% J_tf =    tf + input.auxdata.regularizationCost*integral(1);
+J_vx =  -vxf + input.auxdata.regularizationCostVx*integral;
+J_tf = tf + input.auxdata.regularizationCost*integral; 
 
 % output.objective = cost*J_vx/input.auxdata.vxCostScale + (1-cost)*J_tf/input.auxdata.tCostScale;
 
 % output.objective = 0*J_tf + 1*J_vx;
-output.objective = 1*J_vx;
-% output.objective = costVx*J_vx;% + costTime;
+% output.objective = 1*J_vx + 0*123;
+output.objective = costVx*J_vx + costTime*J_tf;
+% output.objective =  costTime*J_tf;
 % output.eventgroup.event = [input.phase.finalstate - input.phase.initialstate];
 
 end

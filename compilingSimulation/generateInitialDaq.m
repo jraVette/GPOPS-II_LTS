@@ -126,8 +126,8 @@ setup.bounds.phase.control.lower      = [ -deltaMax 0        0        kappaMin k
 setup.bounds.phase.control.upper      = [  deltaMax kappaMax kappaMax kappaMax kappaMax fzMax fzMax fzMax fzMax].*scaling.control;
 setup.bounds.phase.path.lower         = [0*ones(1,6) 0 ];
 setup.bounds.phase.path.upper         = [0*ones(1,6) 1];
-setup.bounds.phase.integral.lower     =  [0   0];
-setup.bounds.phase.integral.upper     =  [1e8 1e8];
+setup.bounds.phase.integral.lower     =  [0  ];
+setup.bounds.phase.integral.upper     =  [1e8];
 
 %% Auxdata - put this here so I can use bounds
 setup.auxdata.variableNames             = variableNames;
@@ -148,7 +148,7 @@ setup.auxdata.vxCostScale               = 1;%-70;
 setup.auxdata.engMult                   = 0.9;
 setup.auxdata.muMultX                   = 0.58;
 setup.auxdata.muMultY                   = 1.6;
-setup.auxdata.costTime                  = 0; %Note gpopsMPC will overwrite this, need it to compile adigator
+setup.auxdata.costTime                  = 1; %Note gpopsMPC will overwrite this, need it to compile adigator
 setup.auxdata.costVx                    = 1; %Note gpopsMPC will overwrite this, need it to compile adigator
 % vxTarget = 100;
 % setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0 0];
@@ -165,7 +165,7 @@ setup.auxdata.costVx                    = 1; %Note gpopsMPC will overwrite this,
 %% GPOPS Setup
 setup.name                        = 'quadCar';
 setup.nlp.solver                  = 'ipopt';
-setup.derivatives.supplier        = 'adigator';%'adigator';%'sparseFD'; %'adigator';
+setup.derivatives.supplier        = 'adigator';%'adigator';%'adigator';%'sparseFD'; %'adigator';
 setup.derivatives.derivativelevel = 'second';
 setup.scales.method               = 'automatic-hybridUpdate';%'automatic-guessUpdate';'automatic-hybridUpdate';'none'
 % 'automatic-bounds'       scales the problem from the user-supplied bounds on the variables
@@ -231,13 +231,17 @@ if loadGuess
     setup.guess.phase.control = ...
         [0 0.00 0.00 0.00 0.00 wf wf wr wr
          0 0.00 0.00 0.00 0.00 wf wf wr wr];
-    setup.guess.phase.integral     = [0 0];
+    setup.guess.phase.integral     = [0];
     
     setup.guess.phase.time = setup.guess.phase.time*scaling.length;
     setup.guess.phase.state = bsxfun(@times,setup.guess.phase.state,scaling.state);
     setup.guess.phase.control = bsxfun(@times,setup.guess.phase.control,scaling.control);
 end
 
+%% Ga options
+populationSize = 10; 
+timeToGiveUpOnSim = 100*60*60;
+nonConvergentCost = 1000;
 
 %% DAQ File
 filename = sprintf('%s_GPOPS_ShortSegStrightLine-tOpt',datestr(now,'yyyy-mm-dd_HH_MM_SS'));

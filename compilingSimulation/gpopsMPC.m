@@ -79,7 +79,10 @@ while ~checkeredFlag
             horizon = horizon - masterDaq.header.horizonDecrement;
             segDaq.header.horizon = horizon;
             
-        end%horizonrefinement
+        elseif ~convergence %horizonrefinement
+            fprintf('Simulation failed on Horizon %03i',masterDaq.status.currentSegment)
+            return
+        end
     end%while ~converge
     
     %Save a snapshot of everything

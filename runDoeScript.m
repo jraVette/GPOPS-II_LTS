@@ -6,7 +6,7 @@ c
 
 
 %Flags and constants
-nRepeats = 50;                                                              %How many of each iterate to run
+nRepeats = 5;                                                              %How many of each iterate to run
 setupEachIterateDirectory   = true;                                        %true or false, true will create a folder in the ./currentlyRunning folder for each iterate, false will just setup the DAQ files and create a summary results .mat file
 currentlyRunningDirectory   = 'currentlyRunning';                          %Name of the currently running directory
 
@@ -95,8 +95,34 @@ doe = {...
      'header.setup.mesh.colpointsmax'   [2 4 2 4 2 4 2 4 4 5 7]};
 };
 
+%REV11 just some repeats
+doe = {...
+    {'header.horizon'             [300] 
+     'header.controlHorizon'      [60]}; %Horizon DOE
+};
 
 
+%REV12 nlp options
+doe = {...
+    {'header.setup.nlp.ipoptoptions.maxiterations'    [250  500  250  250 500]
+     'header.setup.mesh.maxiterations'                [1    1    2    3   3  ]
+     'header.horizonRefinement'                       [false false false false false]}
+};
+
+%REV13 - FD vs adigator and horizon stuff
+doe = {...
+    {'header.setup.derivatives.supplier' {'sparseFD'  'adigator'  'sparseFD'  'adigator' }
+     'header.horizon'           [300         300         500         500]
+     'header.controlHorizon'    [60          60          100         100]
+     'header.horizonRefinement' [true        true        true        true]}
+};
+
+%REV14 - FD on and see about number of mesh iterations
+doe = {...
+        {'header.setup.derivatives.supplier'    {'sparseFD'  'sparseFD'  'sparseFD'  'adigator'}
+        'setup.mesh.maxiterations'              [1   2   4      1]}
+        {'setup.nlp.ipoptoptions.maxiterations' [250 500 1000]};
+    };
 
 %Setup each daq DOE
 addpath('compilingSimulation/')
@@ -129,7 +155,7 @@ for i = 1:numel(doe)
             if isa(localDoe{iField,2},'cell')
                 daq.header.doe.values{iField} = localDoe{iField,2}{j};
             else
-                daq.header.doe.values(iField) = localDoe{iField,2}(j);
+                daq.header.doe.values{iField} = localDoe{iField,2}(j);
             end
         end       
         
