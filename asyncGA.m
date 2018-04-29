@@ -7,9 +7,10 @@ function asyncGA(varargin)
 %    in jGA_remoteAsync.m.
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+addpath(genpath('./compilingSimulation'))
 defaults = {'gaFilename','gaInformation.mat'
-            'startingPointFile','startingPoint.mat'};
+            'startingPointFile','startingPoint.mat'
+            'referenceSolutionFullFile', fullfile(pwd,'compilingSimulation','driverA_EstInputs_T17.mat')};
 setDefaultsForVarargin(defaults,varargin)
 
 genNewPopulationFlag = false;
@@ -27,6 +28,7 @@ if ~exist(gaFilename,'file')
     daq = generateInitialDaq;                                              %Saves a setup of GA_information.mat
     daq.header.gaFilename = gaFilename;                                    %This is the best spot to add that
     gaInfo.daq = daq;                                                      %Put it in teh gaInfo structure
+    gaInfo.referenceSolutionFullFile = referenceSolutionFullFile;
     
     if exist(startingPointFile,'file')                                     %See if we have a startingPoint.mat file if so, load it up
         load(startingPointFile)
@@ -259,6 +261,12 @@ end %myOutputFunction
 function [updatedGaInfo,finished] = evaluatePopulationScores(gaInfo)
 %This function will loop through all individuals and see if if they're done
 %and extract information and store in the gaInformation structure.
+
+%Load up the reference solution
+refDaq = load(gaInfo.referenceSolutionFullFile);
+refDaq = refDaq.daq;
+
+
 %Assign non convergent cost after x number of minuts
 daq = gaInfo.daq;
 timeToGiveUpOnSim = daq.header.timeToGiveUpOnSim; %Min
@@ -286,6 +294,21 @@ for iIter = 1:daq.header.populationSize
         if ~isfield(stat,'switchingDaq')                                   %this is only on finished files, so make empty field (otherwise, error will occur for mismatched structure)
             stat.switchingDaq = [];
         end
+        
+        %% COST FUNCTION OUTER LOOP
+        %Load the solution
+        solDaq = load(stat.filename);
+        solDaq = solDaq.daq;
+        
+        if stat.simFinished && stat.conv
+            diffData = compareDaqChannel({'vx';'ey'},refDaq,'distance',solDaq,'suppressPlot',true);
+            stat.score = diffData.vx.integrated2NormError/1.7095e+04 + ...
+                         diffData.ey.integrated2NormError/9.0544e+03;
+        
+        else
+            stat.score = daq.header.nonConvergentCost;
+        end
+        
         stats(iIter) = stat;
         cd(currentDirectory)
         iterToMove = [iterToMove iIter];                                   %Used to move the simulation directory at the end
@@ -300,7 +323,7 @@ end
 %Tell the nonExist sims that they didn't converge (assume manually deleted)
 if ~isempty(nonExistantSims)
     for i=1:length(nonExistantSims)
-        stats(nonExistantSims(i)).lapTime = daq.header.nonConvergentCost;
+        stats(nonExistantSims(i)).score = daq.header.nonConvergentCost;
         stats(nonExistantSims(i)).conv = 0;
     end
 end
@@ -371,32 +394,32 @@ if isempty(ind)
     %Ok, all sims are done let's check on the validity of scores. First
     %make sure there all min is with in a sigma of the mean.  Should be
     %within in this
-    scores = [stats(:).lapTime]';
+    scores = [stats(:).score]';
     
     
     %Check for anomalies in scoring
-    standardDeviation = std(scores);
-    minReasonableScore = mean(scores)-standardDeviation;
-    minReasonableScore = 14.00;    
-    warningIterates = find(scores<minReasonableScore);
-    if ~isempty(warningIterates)
-        disp(' ')
-        disp('__________________________________________________________ ')
-        fprintf('Problem detected with specific iterates\n')
-        for i = 1:length(warningIterates)
-            iIter = warningIterates(i);
-            filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
-            filename = fullfile('currentlyRunning',filename);
-            disp(' ')
-            fprintf('Lap time on iterate %03i = %6.4f\n',iIter,scores(iIter));
-            disp(' ')
-            fprintf('Check file: %s\n',filename);
-            disp(' ')
-            disp('__________________________________________________________ ')
-            disp(' ')
-            error('Anomalies found, check file and perhaps delete iterates')
-        end
-    end
+%     standardDeviation = std(scores);
+%     minReasonableScore = mean(scores)-standardDeviation;
+%     minReasonableScore = 14.00;    
+%     warningIterates = find(scores<minReasonableScore);
+%     if ~isempty(warningIterates)
+%         disp(' ')
+%         disp('__________________________________________________________ ')
+%         fprintf('Problem detected with specific iterates\n')
+%         for i = 1:length(warningIterates)
+%             iIter = warningIterates(i);
+%             filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
+%             filename = fullfile('currentlyRunning',filename);
+%             disp(' ')
+%             fprintf('Lap time on iterate %03i = %6.4f\n',iIter,scores(iIter));
+%             disp(' ')
+%             fprintf('Check file: %s\n',filename);
+%             disp(' ')
+%             disp('__________________________________________________________ ')
+%             disp(' ')
+%             error('Anomalies found, check file and perhaps delete iterates')
+%         end
+%     end
     
     %Save results
     finished = true;

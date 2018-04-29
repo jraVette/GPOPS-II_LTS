@@ -1,6 +1,7 @@
 license.m
 *~
 *ADi*
+*.mat
 .DS_Store
 gpops2License.p
 /compilingSimulation/GPOPS-II/

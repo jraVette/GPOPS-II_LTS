@@ -239,13 +239,17 @@ if loadGuess
 end
 
 %% Ga options
-populationSize = 10; 
+populationSize = 100; 
 timeToGiveUpOnSim = 100*60*60;
 nonConvergentCost = 1000;
+simFinished = false; %Flag for stats
+conv = false; %Flag for stats
+
 
 %% DAQ File
-filename = sprintf('%s_GPOPS_ShortSegStrightLine-tOpt',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
-shortFilename = 'tOpt';
+% filename = sprintf('%s_GPOPS_ShortSegStrightLine-tOpt',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
+filename = 'daqFile';
+shortFilename = 'gaIterate';
 daq.header = saveVariablesAssignedToPointInStructure('exclude',{'varargin';'vehicle';'track'; 'refDaqFile'; 'refDaq'},'clearVariableAfterPackage',true);
 daq.vehicle = vehicle;
 daq.track = track;

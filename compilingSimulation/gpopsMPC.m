@@ -80,6 +80,9 @@ while ~checkeredFlag
             segDaq.header.horizon = horizon;
             
         elseif ~convergence %horizonrefinement
+            masterDaq.header.simFinished = true;
+            masterDaq.header.conv = false;
+            genStats(masterDaq);
             fprintf('Simulation failed on Horizon %03i',masterDaq.status.currentSegment)
             return
         end
@@ -88,8 +91,10 @@ while ~checkeredFlag
     %Save a snapshot of everything
     fprintf('HORIZON: %03i EXIT, convergence = %d.\n',masterDaq.status.currentSegment,convergence);
     diary off
+    
 %     snapshotFilename = sprintf('Horizon%03i-Snapshot',masterDaq.status.currentSegment);
 %     save(snapshotFilename)
+
     justHorizonFilename = sprintf('Horizon%03i-OCP',masterDaq.status.currentSegment);
     daq = segDaq;
     save(justHorizonFilename,'daq');
@@ -120,11 +125,6 @@ while ~checkeredFlag
         masterDaq.rawData.mpcHorizon.meas =  [masterDaq.rawData.mpcHorizon.meas; masterDaq.status.currentSegment*ones(size(mpcIntervalDaq.rawData.(variableNames.indepVarName).meas))];
     end
     
-%     %See when we skip a beat
-%     if length(unique(diff(masterDaq.rawData.distance.meas))) >1
-%         save('snap.mat')
-%         error('got some issues')
-%     end
     
     %Now grab the last index as the starting point of the next
     indNewX0 = length(masterDaq.rawData.(variableNames.indepVarName).meas);
@@ -201,18 +201,23 @@ while ~checkeredFlag
     
     %Save the master daq
     daq = masterDaq;
-    masterDaqFilename = sprintf('Horizon%03i-MasterDaq',masterDaq.status.currentSegment-1);
-    save(masterDaqFilename,'daq');
+%     masterDaqFilename = sprintf('Horizon%03i-MasterDaq',masterDaq.status.currentSegment-1);
+%     save(masterDaqFilename,'daq');
+    save(masterDaq.header.filename,'daq');
+    
     
    
 end %While no checkered flag
 
+masterDaq.header.simFinished = true;
+masterDaq.header.conv = true;
+[times, masterDaq] = calculateManeuveringTime(masterDaq);
 
 genStats(masterDaq);
-% [times, masterDaq] = calculateManeuveringTime(masterDaq);
+
 %Save the final solution
-snapshotFilename = sprintf('%s_MasterDaqSolution_t',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
+% snapshotFilename = sprintf('%s_MasterDaqSolution_t',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
 daq = masterDaq;
-save(snapshotFilename,'daq');
+save(masterDaq.header.filename,'daq');
 
     
