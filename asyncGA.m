@@ -8,9 +8,11 @@ function asyncGA(varargin)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 addpath(genpath('./compilingSimulation'))
+disp(pwd)
+path
 defaults = {'gaFilename','gaInformation.mat'
             'startingPointFile','startingPoint.mat'
-            'referenceSolutionFullFile', fullfile(pwd,'compilingSimulation','driverA_EstInputs_T17.mat')};
+            'referenceSolutionFullFile', fullfile(pwd,'compilingSimulation','driverB_EstInputs_T17.mat')}; %'driverA_EstInputs_T17.mat'
 setDefaultsForVarargin(defaults,varargin)
 
 genNewPopulationFlag = false;
@@ -265,6 +267,7 @@ function [updatedGaInfo,finished] = evaluatePopulationScores(gaInfo)
 %Load up the reference solution
 refDaq = load(gaInfo.referenceSolutionFullFile);
 refDaq = refDaq.daq;
+addpath(genpath('./compilingSimulation'));
 
 
 %Assign non convergent cost after x number of minuts
@@ -284,6 +287,7 @@ for iIter = 1:daq.header.populationSize
     filename = fullfile('currentlyRunning',filename);
     if exist(filename,'dir')
         cd(filename)
+        addpath(genpath('../../compilingSimulation'))
         if ~exist('stat.mat','file')
             fprintf('Stat file not in %s\n',filename);
             fprintf('Assume simulations have not started. Please re-start!\n')

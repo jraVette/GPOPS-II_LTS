@@ -1,0 +1,13 @@
+#!/bin/bash
+gaDir=$(pwd)
+while :
+do
+	echo "Current Directory" $PWD
+    matlab -nodisplay -nojvm -r "asyncGA;exit"
+    sleep 1
+    cd "$gaDir/currentlyRunning" 
+    echo "Current Directory" $PWD
+    ./runAllDirectoriesUsingGnuParallel.bsh
+    cd "$gaDir"
+    sleep 1
+done

@@ -79,6 +79,7 @@ fprintf(fileID,'Sim Started         = %s\n',   stat.simStartedString);
 fprintf(fileID,'Last Check In       = %s\n',   stat.lastCheckinString);
 fprintf(fileID,'Elapsed Time        = %s\n',   stat.elapsedTimeString);
 fprintf(fileID,'Current Distance    = %5.1f\n',stat.currentDistance);
+fprintf(fileID,'Current Horizon     = %i\n',   stat.currentHorizon);
 fprintf(fileID,'Simulation Finished = %1i\n',  stat.simFinished);
 fprintf(fileID,'Lap Time            = %6.4f\n',  stat.lapTime);
 fprintf(fileID,'Convergence         = %f\n',     stat.conv);

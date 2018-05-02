@@ -239,7 +239,7 @@ if loadGuess
 end
 
 %% Ga options
-populationSize = 100; 
+populationSize = 2; 
 timeToGiveUpOnSim = 100*60*60;
 nonConvergentCost = 1000;
 simFinished = false; %Flag for stats
