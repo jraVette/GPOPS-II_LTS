@@ -239,11 +239,14 @@ if loadGuess
 end
 
 %% Ga options
-populationSize = 2; 
+populationSize = 4; 
+nIteratesToSavePerGeneration = 10;
 timeToGiveUpOnSim = 100*60*60;
 nonConvergentCost = 1000;
 simFinished = false; %Flag for stats
-conv = false; %Flag for stats
+conv = nan; %Flag for stats
+saveDiaryFiles = false;
+cleanUpRunningDirecotry = true;
 
 
 %% DAQ File

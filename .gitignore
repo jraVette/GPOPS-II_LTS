@@ -6,7 +6,9 @@ license.m
 gpops2License.p
 /compilingSimulation/GPOPS-II/
 /compilingSimulation/adigator/
+compilingSimulation/runMpcSimulation/*
 commands.txt
 *.log
 /templateIterate
 /testRun*
+/currentlyRunning

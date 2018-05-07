@@ -48,9 +48,12 @@ while ~checkeredFlag
     x0 = masterDaq.status.currentX0;
     
     %Setup diary
-    diaryFilename = sprintf('Horizon%03i-Diary',masterDaq.status.currentSegment);
-    diary([diaryFilename '_diary']);
+    if masterDaq.header.saveDiaryFiles
+        diaryFilename = sprintf('Horizon%03i-Diary',masterDaq.status.currentSegment);
+        diary([diaryFilename '_diary']);
+    end
     
+    %Run the sim until converged
     while ~convergence
         %Update the segDaq bounds for the ocp
         segDaq.header = masterDaq.header; 
@@ -75,9 +78,12 @@ while ~checkeredFlag
         
         [segDaq, convergence] = fourwheelMain(segDaq,'calcAlgebraicStates',false,'saveSnapshotofShortSeg',[]);
         
+        %If horizon refinement is on, decrease horizon here
         if ~convergence && ...
            masterDaq.header.horizonRefinement && ...
            horizon-masterDaq.header.horizonDecrement >= masterDaq.header.minimumHorizon
+       
+            %Increment counters
             iHorizonRefinement = iHorizonRefinement+1;
             segDaq.header.iHorizonRefinement = iHorizonRefinement;
             
@@ -85,7 +91,9 @@ while ~checkeredFlag
             horizon = horizon - masterDaq.header.horizonDecrement;
             segDaq.header.horizon = horizon;
             
-        elseif ~convergence %horizonrefinement
+        %If the simulation failed and we've already refined as much as
+        %possible, kick out
+        elseif ~convergence 
             masterDaq.header.simFinished = true;
             masterDaq.header.conv = false;
             genStats(masterDaq);
@@ -96,22 +104,23 @@ while ~checkeredFlag
     
     %Save a snapshot of everything
     fprintf('HORIZON: %03i EXIT, convergence = %d.\n',masterDaq.status.currentSegment,convergence);
-    diary off
     
-%     snapshotFilename = sprintf('Horizon%03i-Snapshot',masterDaq.status.currentSegment);
-%     save(snapshotFilename)
-
-    justHorizonFilename = sprintf('Horizon%03i-OCP',masterDaq.status.currentSegment);
-    daq = segDaq;
-    save(justHorizonFilename,'daq');
-    
-    
-    %See if the problem converged
-    if ~convergence
-        warning('OCP failed to converge at horizon %03i',masterDaq.status.currentSegment);
-        return
+    %Fix up diary file
+    if masterDaq.header.saveDiaryFiles
+        diary off
     end
     
+    %Save the OCP over the horizon, first clean out the header (files
+    %getting big)
+    justHorizonFilename = sprintf('Horizon%03i-OCP',masterDaq.status.currentSegment);
+    tempDaq = segDaq;
+    daq = tempDaq;
+    daq = rmfield(daq,'header');
+    daq.header.filename = tempDaq.header.filename;
+    daq.header.path = tempDaq.header.path;
+    save(justHorizonFilename,'daq');
+    
+   
     %% Update Master Solution
     %If it converged we got here. Next we need to update the master
     %solution. First grab the data just over the MPC update interval
@@ -207,8 +216,6 @@ while ~checkeredFlag
     
     %Save the master daq
     daq = masterDaq;
-%     masterDaqFilename = sprintf('Horizon%03i-MasterDaq',masterDaq.status.currentSegment-1);
-%     save(masterDaqFilename,'daq');
     save(masterDaq.header.filename,'daq');
     
     
@@ -217,13 +224,23 @@ end %While no checkered flag
 
 masterDaq.header.simFinished = true;
 masterDaq.header.conv = true;
-[times, masterDaq] = calculateManeuveringTime(masterDaq);
+[~, masterDaq] = calculateManeuveringTime(masterDaq);
 
 genStats(masterDaq);
 
 %Save the final solution
-% snapshotFilename = sprintf('%s_MasterDaqSolution_t',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
 daq = masterDaq;
 save(masterDaq.header.filename,'daq');
+
+%Clean up the running directory
+if masterDaq.header.cleanUpRunningDirecotry
+    !rm quadCarIPOPTinfo.txt
+    !rm readme.txt
+    !rm *.ctf
+    !rm splash.png
+    !rm mccExcludedFiles.log
+    !rm run_*
+    !rm -rf *mcr*
+end
 
     
