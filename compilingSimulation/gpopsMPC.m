@@ -5,9 +5,9 @@ function daq = gpopsMPC(daq)
 %    daq - see generateInitialDaq();
 %OUTPUS:
 %    daq - updated daq file
-%Creation: 21 Dec 2017 - Jeff Anderson
-%Updated:  10 Apr 2018 - Jeff Anderson - fixed the horizon refinement
-%     strategy to shorten the horizon only.
+%Creation: 21 Dec 2017 - Jeff Anderson 
+%Updated:  02 May 2018 - Jeff Anderson - Added a return if sim is already 
+%    done to help out batch running.
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 %Fresh sim?
@@ -15,6 +15,12 @@ if nargin == 0
     masterDaq = generateInitialDaq();    
 else
     masterDaq = daq;
+end
+
+%Make sure the sim hasn't finished already
+if masterDaq.header.simFinished
+    fprintf('Simulation already complete\n')
+    return
 end
 
 if ~isfield(masterDaq,'status')

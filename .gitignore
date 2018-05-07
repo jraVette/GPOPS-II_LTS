@@ -7,3 +7,6 @@ gpops2License.p
 /compilingSimulation/GPOPS-II/
 /compilingSimulation/adigator/
 commands.txt
+*.log
+/templateIterate
+/testRun*

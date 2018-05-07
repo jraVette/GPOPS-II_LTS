@@ -13,7 +13,7 @@ setDefaultsForVarargin(defaults,varargin)
 % carFilename = 'LimebeerF1Car.mat';
 load(carFilename);
 
-refDaqFile = 'driverA_EstInputs_T17.mat';
+refDaqFile = 'driverB_EstInputs_T17.mat'
 refDaq = load(refDaqFile);
 refDaq = refDaq.daq;
 
@@ -250,7 +250,7 @@ conv = false; %Flag for stats
 % filename = sprintf('%s_GPOPS_ShortSegStrightLine-tOpt',datestr(now,'yyyy-mm-dd_HH_MM_SS'));
 filename = 'daqFile';
 shortFilename = 'gaIterate';
-daq.header = saveVariablesAssignedToPointInStructure('exclude',{'varargin';'vehicle';'track'; 'refDaqFile'; 'refDaq'},'clearVariableAfterPackage',true);
+daq.header = saveVariablesAssignedToPointInStructure('exclude',{'varargin';'vehicle';'track'; 'refDaq'},'clearVariableAfterPackage',true);
 daq.vehicle = vehicle;
 daq.track = track;
 % daq.header.iterNumb = 1;

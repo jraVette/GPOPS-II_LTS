@@ -8,29 +8,26 @@ function asyncGA(varargin)
 %
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 addpath(genpath('./compilingSimulation'))
-disp(pwd)
-path
-defaults = {'gaFilename','gaInformation.mat'
-            'startingPointFile','startingPoint.mat'
-            'referenceSolutionFullFile', fullfile(pwd,'compilingSimulation','driverB_EstInputs_T17.mat')}; %'driverA_EstInputs_T17.mat'
+defaults = {'daq'       , []                %Override the daq file here
+            'gaFilename','gaInformation.mat'
+            'startingPointFile','startingPoint.mat'};
 setDefaultsForVarargin(defaults,varargin)
 
 genNewPopulationFlag = false;
 compileScoresFlag = false;
 
-% if exist(gaFilename,'file')
-%     delete(gaFilename)
-%     !rm -r GA_*
-% end
-clc
-
-
 %If we don't have this puppy started, start it up
 if ~exist(gaFilename,'file')
-    daq = generateInitialDaq;                                              %Saves a setup of GA_information.mat
+    if isempty(daq);     
+        daq = generateInitialDaq;                                          %Saves a setup of GA_information.mat
+    end
+    
     daq.header.gaFilename = gaFilename;                                    %This is the best spot to add that
     gaInfo.daq = daq;                                                      %Put it in teh gaInfo structure
-    gaInfo.referenceSolutionFullFile = referenceSolutionFullFile;
+    
+    refSolution = load(sprintf('./compilingSimulation/%s',daq.header.refDaqFile));
+    refSolution = refSolution.daq;
+    gaInfo.referenceMeasurement = refSolution;
     
     if exist(startingPointFile,'file')                                     %See if we have a startingPoint.mat file if so, load it up
         load(startingPointFile)
@@ -69,6 +66,8 @@ end
 %Setup new generation
 if genNewPopulationFlag 
     gaInfo = setupNewGeneration(gaInfo);
+    fn = strrep(gaFilename,'.mat','');
+    save(sprintf('%s_SnapshotAfterGen%03iSetup',fn,iGen),'gaInfo')
 else
     fprintf('New generation not created\n')
 end
@@ -265,8 +264,7 @@ function [updatedGaInfo,finished] = evaluatePopulationScores(gaInfo)
 %and extract information and store in the gaInformation structure.
 
 %Load up the reference solution
-refDaq = load(gaInfo.referenceSolutionFullFile);
-refDaq = refDaq.daq;
+refDaq = gaInfo.referenceMeasurement;
 addpath(genpath('./compilingSimulation'));
 
 
