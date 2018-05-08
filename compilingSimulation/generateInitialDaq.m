@@ -13,7 +13,7 @@ setDefaultsForVarargin(defaults,varargin)
 % carFilename = 'LimebeerF1Car.mat';
 load(carFilename);
 
-refDaqFile = 'driverB_EstInputs_T17.mat'
+refDaqFile = 'driverA_EstInputs_T17.mat'
 refDaq = load(refDaqFile);
 refDaq = refDaq.daq;
 
@@ -239,8 +239,8 @@ if loadGuess
 end
 
 %% Ga options
-populationSize = 4; 
-nIteratesToSavePerGeneration = 10;
+populationSize = 100; 
+nIteratesToSavePerGeneration = 10; %Leave empty for all
 timeToGiveUpOnSim = 100*60*60;
 nonConvergentCost = 1000;
 simFinished = false; %Flag for stats

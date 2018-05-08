@@ -8,7 +8,7 @@ do
 
     cd "$gaDir/currentlyRunning" 
     echo "Current Directory" $PWD
-    ./runAllDirectoriesUsingGnuParallelMatlabVersion.bsh
+    ./runAllDirectoriesUsingGnuParallelCompiledVersion.bsh
     cd "$gaDir"
     sleep 1
 done

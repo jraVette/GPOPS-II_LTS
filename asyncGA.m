@@ -330,47 +330,13 @@ if ~isempty(nonExistantSims)
     end
 end
 
-
 %Find all sims that aren't done
 ind = find([stats(:).simFinished]' == 0);
 cpuHrs = str2num(datestr([stats(:).elapsedTime]','HH'));
 cpuMin = str2num(datestr([stats(:).elapsedTime]','MM'));
-cpuTime = cpuHrs*60+cpuMin;
+cpuSec = str2num(datestr([stats(:).elapsedTime]','SS'));
+cpuTime = cpuHrs*60*60+cpuMin*60+cpuSec;
 cpuTimeNotFinished = cpuTime(ind);
-
-%%% Took this out because palmato can only get the elapsed time of a
-%%% job...if multiple jobs, then won't work
-% %Rough calculate the cpuTime based on stat.txt (if we're constantly maxing
-% %the 2000 iterations in ipopt, then this could be hours off so, try getting
-% %it from palmetto too
-% for i = 1:length(ind)
-%     iIter = ind(i);
-%     filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
-%     filename = fullfile('currentlyRunning',filename);
-%     cd(filename);
-%     
-%     %Try to get run time from Palmetto first
-%     fid = fopen('jobNumb.txt');
-%     if fid ~= -1
-%         temp = textscan(fid,'%s');
-%         jobNumber = temp{1}; %textscan embeds one level deep
-%         fclose(fid);
-%         
-%         systemCommand = sprintf('qstat -xf %s | grep resources_used.walltime',jobNumber{1});
-%         [status,result] = system(systemCommand);
-%         if status == 0 
-%             timeStamp   = strrep(result(end-8:end),char(10),'');
-%             seconds     = str2num(timeStamp(end-1:end));
-%             timeStamp   = timeStamp(1:end-3);
-%             minutes     = str2num(timeStamp(end-1:end));
-%             timeStamp   = timeStamp(1:end-3);
-%             hours       = str2num(timeStamp);
-%             cpuTimeNotFinished(i) = hours*60+minutes+seconds/60;
-%         end %if we get a result from stat -xf
-%     end %If we can read the jobNumber file
-%     cd(currentDirectory)
-% end
-
 ind2 = find(cpuTimeNotFinished > timeToGiveUpOnSim);
 
 %Loop through sims we need to give up on
@@ -379,12 +345,11 @@ for i = 1:length(ind2)
     filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
     filename = fullfile('currentlyRunning',filename);
     cd(filename)    
-    
-%     !./killJob.bsh                                                       %Can't kill a job from w/in a job   
+                                                   
     cd(currentDirectory)
     stats(iIter).lapTime = daq.header.nonConvergentCost;
-    stats(iIter).conv = 2;
-    stats(iIter).simFinished = 2;
+    stats(iIter).conv = false;
+    stats(iIter).simFinished = true;
 end
 
 %Now, double check on jobs that aren't done and still haven't hit the
@@ -428,6 +393,14 @@ if isempty(ind)
     gaInfo.generation(iGen).stats = stats';
     gaInfo.generation(iGen).scores = scores;
     updatedGaInfo = gaInfo;
+    save(daq.header.gaFilename,'gaInfo')   
+    
+    %Clean up the files, remove the copies of all the running code
+    if gaInfo.daq.header.cleanUpRunningDirecotry
+        cd('currentlyRunning')
+        !./cleanFinishedRuns.bsh
+        cd(currentDirectory)
+    end
     
     %Last thing is to move the simulation to the finishedRunningDirectory
     for i = 1:length(iterToMove)
@@ -438,7 +411,13 @@ if isempty(ind)
         system(systemCommand);
     end
     
-    save(daq.header.gaFilename,'gaInfo')   
+    %Just save the top iterates if that's what we chose to do in the
+    %daqFile
+    if ~isempty(gaInfo.daq.header.nIteratesToSavePerGeneration)
+        extractTopBestIterates('lookAtGeneration',iGen,'nTopIteratesToCopy',gaInfo.daq.header.nIteratesToSavePerGeneration)
+    end
+    
+    
 end
     
 end %evaluatePopulationScores

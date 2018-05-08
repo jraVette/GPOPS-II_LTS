@@ -232,15 +232,5 @@ genStats(masterDaq);
 daq = masterDaq;
 save(masterDaq.header.filename,'daq');
 
-%Clean up the running directory
-if masterDaq.header.cleanUpRunningDirecotry
-    !rm quadCarIPOPTinfo.txt
-    !rm readme.txt
-    !rm *.ctf
-    !rm splash.png
-    !rm mccExcludedFiles.log
-    !rm run_*
-    !rm -rf *mcr*
-end
 
     
