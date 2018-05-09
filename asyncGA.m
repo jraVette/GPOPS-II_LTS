@@ -193,8 +193,10 @@ for iIter = 1:daq.header.populationSize
     filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
     filename = fullfile('currentlyRunning',filename);
     mkdir(filename)
-    sysCommand = sprintf('cp templateIterate/* %s',filename);
-    system(sysCommand);
+%     sysCommand = sprintf('cp templateIterate/* %s',filename);
+%     system(sysCommand);
+    copyfile('templateIterate',filename)
+    
     currentDirectory = pwd;
     cd(filename);
     
@@ -396,7 +398,7 @@ if isempty(ind)
     save(daq.header.gaFilename,'gaInfo')   
     
     %Clean up the files, remove the copies of all the running code
-    if gaInfo.daq.header.cleanUpRunningDirecotry
+    if gaInfo.daq.header.cleanUpRunningDirecotry && ~ispc
         cd('currentlyRunning')
         !./cleanFinishedRuns.bsh
         cd(currentDirectory)
@@ -407,13 +409,14 @@ if isempty(ind)
         iIter = iterToMove(i);
         filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
         filename = fullfile('currentlyRunning',filename);
-        systemCommand = sprintf('mv %s finishedRunning/',filename);
-        system(systemCommand);
+%         systemCommand = sprintf('mv %s finishedRunning/',filename);
+%         system(systemCommand);
+        movefile(filename,'finishedRunning')
     end
     
     %Just save the top iterates if that's what we chose to do in the
     %daqFile
-    if ~isempty(gaInfo.daq.header.nIteratesToSavePerGeneration)
+    if ~isempty(gaInfo.daq.header.nIteratesToSavePerGeneration) && ~ispc
         extractTopBestIterates('lookAtGeneration',iGen,'nTopIteratesToCopy',gaInfo.daq.header.nIteratesToSavePerGeneration)
     end
     
