@@ -13,7 +13,7 @@ setDefaultsForVarargin(defaults,varargin)
 % carFilename = 'LimebeerF1Car.mat';
 load(carFilename);
 
-refDaqFile = 'driverA_EstInputs_T17.mat'
+refDaqFile = 'GA_Best_DriverA_daqFile.mat'
 refDaq = load(refDaqFile);
 refDaq = refDaq.daq;
 
@@ -48,25 +48,7 @@ horizonRefinement       = false;
 
 
 %% Setup switching
-s                       = [-100 1*10000]';                                 %just big numbers so it spans the track
-c                       = [0 0]';                                          %time optimal switching
-switchingDaq.rawData.distance = createDaqChannelData(s,'m','Distance');
-switchingDaq.rawData.switching = createDaqChannelData(c,'','Switching');
-
-s = initialDistance:controlHorizon:finishDistance;
-     %'time cost vx cost'},...
-c0  = [ 1        0];
-lb0 = [ 0        0 ];
-ub0 = [ 1        1 ];
-c  = repmat(c0,length(s),[]);
-lb = repmat(lb0,length(s),[]);
-ub = repmat(ub0,length(s),[]);
-
-switchingDaq.rawData.distance = createDaqChannelData(s,'m','Distance');
-switchingDaq.rawData.switching = createDaqChannelData(c,'','Switching');
-switchingDaq.rawData.lb = createDaqChannelData(lb,'','Switching Lower Bounds');
-switchingDaq.rawData.ub = createDaqChannelData(ub,'','Switching Upper Bounds');
-clear s c c0 lb ub lb0 ub0%don't need them
+switchingDaq = refDaq.header.switchingDaq;
 
 %% Scaling
 scaling.length = 1;%1/(vehicle.parameter.a.meas+vehicle.parameter.b.meas);
@@ -87,13 +69,7 @@ ind  = findNearestPoint(initialDistance,refDaq.rawData.distance.meas);
 x0Daq = assembleNewDaqAtIndicies(ind,refDaq);
 x0   = writeDaqChannelsToMatrix(x0Daq,'selectedChannels',variableNames.stateNames);
 clear x0Daq
-%vx0 = 50;
-%vy0 = 0;
-%r0  = 0;
-%ey0 = 0;
-%ePsi0 = 0;
-%t0 = 0;
-%x0 = [vx0 vy0 r0 ey0 ePsi0 t0 ];
+
 x0(end) = 0;
 x0 = x0.*scaling.state;
 
@@ -150,15 +126,6 @@ setup.auxdata.muMultX                   = 0.58;
 setup.auxdata.muMultY                   = 1.6;
 setup.auxdata.costTime                  = 1; %Note gpopsMPC will overwrite this, need it to compile adigator
 setup.auxdata.costVx                    = 1; %Note gpopsMPC will overwrite this, need it to compile adigator
-% vxTarget = 100;
-% setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0 0];
-% setup.auxdata.stageCost.scaling         = [1        1 1 0       0       0       0       0 1 1 0];
-% setup.auxdata.stageCost.weight          = [1];
-
-% setup.auxdata.terminalCost.targetState  = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
-% setup.auxdata.terminalCost.scaling      = [vxTarget vyMax rMax omegaUb omegaUb omegaUb omegaUb TMax eyMax ePsiMax];
-% setup.auxdata.terminalCost.weight       = 0;
-
 
 
 
@@ -189,41 +156,18 @@ setup.mesh.colpointsmax = 6;
 setup.mesh.colpointsmin = 2;
 setup.mesh
 acceptableNlpOutputs = [0 1 ] ; 
-nextGuessType = 'exactPreviousGuess'; % basedOffPrevious  basedOffPreviousStartAndEndPoints  none
-%Notes: none did the best, made it to 350m
-%'exactPreviousGuess' made it to 250m
-%'basedOffPrevious' made it to 325
-%
+nextGuessType = 'exactPreviousGuess'; % basedOffPrevious  basedOffPreviousStartAndEndPoints  none %PRETTY SURE UNUSED DEPRECATE
+
 
 
 %% Guess
 if loadGuess
-%     sGuess = linspace(0,horizon,101)';
     g = 9.81;
     m = vehicle.parameter.mass.meas;
     a = vehicle.parameter.a.meas;
     b = vehicle.parameter.b.meas;
     wf = -b/(a+b)*m*g/2;
     wr = -a/(a+b)*m*g/2;
-%     uGuess = repmat([0 0 0 0.08 0.08 wf wf wr wr],length(sGuess),1);
-%     clear m a b wf wr g
-%     guessDaq.header.setup = setup; %Mimic how we'll have the daq in the final form for OCP
-%     guessDaq.header.scaling = scaling;
-%     guessDaq = generateGuessDaq(sGuess,x0,uGuess,guessDaq);
-%     setup.guess.phase.time    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.indepVarName);
-%     setup.guess.phase.state   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.stateNames);
-%     setup.guess.phase.control = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.controlNames);
-%     setup.guess.phase.integral     = 2;
-
-
-    %Load file
-    % guessFile = load('2018-01-24_11_17_25_solutionSnapshot_Horizon001.mat');
-    % guessFile = load('2018-02-06_16_02_23_solutionSnapshot_Horizon001_corvette.mat');
-    % setup.guess.phase.time = guessFile.segDaq.gpopsOutput.result.solution.phase.time;
-    % setup.guess.phase.state = [guessFile.segDaq.gpopsOutput.result.solution.phase.state];
-    % setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control];
-    % setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
-
 
     %Near arbitrary initial guess
     setup.guess.phase.time    = [0; finishDistance-initialDistance];
@@ -256,7 +200,6 @@ shortFilename = 'gaIterate';
 daq.header = saveVariablesAssignedToPointInStructure('exclude',{'varargin';'vehicle';'track'; 'refDaq'},'clearVariableAfterPackage',true);
 daq.vehicle = vehicle;
 daq.track = track;
-% daq.header.iterNumb = 1;
 daq.header.path = pwd;
 daq.header = addNotesToDaqFile(daq.header,sprintf('File setup %s to setup for MPC LTS',datestr(now,'yyyy-mm-dd_HH_MM_SS')));
 

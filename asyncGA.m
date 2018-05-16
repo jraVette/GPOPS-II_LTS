@@ -5,7 +5,7 @@ function asyncGA(varargin)
 %convergence. 
 %Created: 16 Oct 2016 - Jeff Anderson (based off of previous home brewed GA
 %    in jGA_remoteAsync.m.
-%
+%Updated: 08 May 2018 - Jeff Anderson - updated to give tire optimization
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 addpath(genpath('./compilingSimulation'))
 defaults = {'daq'       , []                %Override the daq file here
@@ -24,11 +24,7 @@ if ~exist(gaFilename,'file')
     
     daq.header.gaFilename = gaFilename;                                    %This is the best spot to add that
     gaInfo.daq = daq;                                                      %Put it in teh gaInfo structure
-    
-    refSolution = load(sprintf('./compilingSimulation/%s',daq.header.refDaqFile));
-    refSolution = refSolution.daq;
-    gaInfo.referenceMeasurement = refSolution;
-    
+       
     if exist(startingPointFile,'file')                                     %See if we have a startingPoint.mat file if so, load it up
         load(startingPointFile)
         gaInfo.startingPoint = startingPoint;
@@ -89,21 +85,19 @@ function gaInfo = setupNewGeneration(gaInfo)
 daq = gaInfo.daq;
 
 %Get the sizes of the decisions variables and bounds
-c = daq.header.switchingDaq.rawData.switching.meas;
-[nHorizons,nWeights] = size(c);
-s = daq.header.switchingDaq.rawData.distance.meas;
-lb = daq.header.switchingDaq.rawData.lb.meas;
-ub = daq.header.switchingDaq.rawData.ub.meas;
+muYFontMult = 1;
+muYRearMult = 1;
+c = [muYFontMult  muYRearMult];
+lb = [0.9*muYFontMult 0.9*muYRearMult];
+ub = [1.1*muYFontMult 1.1*muYRearMult];
 nvars = numel(c);
 
-%Constraints setup for weights
-onePositions = ones(1,nWeights);
-ACell = repmat({onePositions}, nHorizons, 1);
-Aeq = blkdiag(ACell{:});
-Beq = ones(nHorizons,1);
+%Constraints setup for muDistribution
+Aeq = [1 1];
+Beq = [2];
 
 %Decision variables
-cTime = reshape(c',[],nvars);
+cInitial = reshape(c',[],nvars);
 lb = reshape(lb',[],nvars);
 ub = reshape(ub',[],nvars);
 
@@ -135,7 +129,7 @@ end
 %If there is still no initial guess, give it a time opt guess and empty
 %score
 if isempty(c)
-    c = cTime;
+    c = cInitial;
 end
 
 %OLD WAY OF DOING THIS
@@ -156,9 +150,6 @@ else
     useParallelFlag = false;
 end
 
-%UPDATED TO REMOVE EQUALITY CONSTRAINTS!!
-Aeq = [];
-Beq = [];
 
 
 options = gaoptimset('InitialPopulation', c,...
@@ -203,14 +194,13 @@ for iIter = 1:daq.header.populationSize
     %Current decision variable
     x = currentGeneration.Population(iIter,:);
     
-    %Update switching
-    s0             = daq.header.initialDistance;
-    controlHorizon = daq.header.controlHorizon;
-    finishDistance = daq.header.finishDistance;
-    s              = s0:controlHorizon:finishDistance;
-    c              = reshape(x,[],length(s))';
-    daq.header.switchingDaq.rawData.distance.meas  = s;
-    daq.header.switchingDaq.rawData.switching.meas = c;
+    %Update tire model
+    muYFontMult = x(1);
+    muYRearMult = x(2);
+    daq.vehicle.tire_front.coeff.meas.muY1 = daq.vehicle.tire_front.coeff.meas.muY1*muYFontMult;
+    daq.vehicle.tire_front.coeff.meas.muY2 = daq.vehicle.tire_front.coeff.meas.muY2*muYFontMult;
+    daq.vehicle.tire_rear.coeff.meas.muY1 = daq.vehicle.tire_rear.coeff.meas.muY1*muYRearMult;
+    daq.vehicle.tire_rear.coeff.meas.muY2 = daq.vehicle.tire_rear.coeff.meas.muY2*muYRearMult;
     
     %Save the daq file to run
     save('daqFile.mat','daq');
@@ -265,10 +255,6 @@ function [updatedGaInfo,finished] = evaluatePopulationScores(gaInfo)
 %This function will loop through all individuals and see if if they're done
 %and extract information and store in the gaInformation structure.
 
-%Load up the reference solution
-refDaq = gaInfo.referenceMeasurement;
-addpath(genpath('./compilingSimulation'));
-
 
 %Assign non convergent cost after x number of minuts
 daq = gaInfo.daq;
@@ -305,9 +291,7 @@ for iIter = 1:daq.header.populationSize
         solDaq = solDaq.daq;
         
         if stat.simFinished && stat.conv
-            diffData = compareDaqChannel({'vx';'ey'},refDaq,'distance',solDaq,'suppressPlot',true);
-            stat.score = diffData.vx.integrated2NormError/1.7095e+04 + ...
-                         diffData.ey.integrated2NormError/9.0544e+03;
+            stat.score = stat.lapTime;
         
         else
             stat.score = daq.header.nonConvergentCost;
