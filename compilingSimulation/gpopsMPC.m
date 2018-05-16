@@ -70,6 +70,7 @@ while ~checkeredFlag
         setup.auxdata.currentDistance         = masterDaq.status.currentDistance;
         setup.auxdata.costTime                = masterDaq.header.switchingDaq.rawData.switching.meas(masterDaq.status.currentSegment,1);
         setup.auxdata.costVx                  = masterDaq.header.switchingDaq.rawData.switching.meas(masterDaq.status.currentSegment,2);
+        setup.auxdata.vehicle                 = masterDaq.vehicle;
         segDaq.header.setup = setup;        
         
         fprintf('HORIZON: %03i currently running....\n',masterDaq.status.currentSegment);
