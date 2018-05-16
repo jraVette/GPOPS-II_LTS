@@ -85,11 +85,11 @@ function gaInfo = setupNewGeneration(gaInfo)
 daq = gaInfo.daq;
 
 %Get the sizes of the decisions variables and bounds
-muYFrontMult = 1;
+muYFontMult = 1;
 muYRearMult = 1;
-c = [muYFrontMult  muYRearMult];
-lb = [0.9*muYFrontMult 0.9*muYRearMult];
-ub = [1.1*muYFrontMult 1.1*muYRearMult];
+c = [muYFontMult  muYRearMult];
+lb = [0.9*muYFontMult 0.9*muYRearMult];
+ub = [1.1*muYFontMult 1.1*muYRearMult];
 nvars = numel(c);
 
 %Constraints setup for muDistribution
@@ -178,6 +178,9 @@ gaInfo.generation(iGen).Population = tempState.Population;                      
 gaInfo = rmfield(gaInfo,'tempState');                                      %Remove the tempState field
 save(daq.header.gaFilename,'gaInfo')                                       %Save the file
 
+%Get some info so we don't repeat iterates
+[bestScore,bestPopulation,allScore,allPopulation,nonSortedScore,nonSortedPopulation,bestIterateInfo,allIterateInfo] = processGaInformationForMatlabGaV2('filename','directLoad','gaInfo',gaInfo,'suppressPlot',true);
+
 %Now, setup file all individual runs
 currentGeneration = gaInfo.generation(iGen);
 for iIter = 1:daq.header.populationSize
@@ -191,21 +194,28 @@ for iIter = 1:daq.header.populationSize
     
     currentDirectory = pwd;
     cd(filename);
-    
+      
     %Current decision variable
     x = currentGeneration.Population(iIter,:);
+    
+    %See if we've already tested this
+    [boolIsMember, index]=ismember(x,allPopulation,'rows');
+    if boolIsMember %already testested, so just save the score
+        stat.simFinished = true;
+        stat.conv = true;
+        stat.score = allScore(index(1));
+        save('stat.mat','stat');
+        daq.header.simFinished = true;
+    end            
     
     %Update tire model
     daq.header.gaDecisionVariable = x;
     muYFrontMult = x(1);
     muYRearMult = x(2);
-    daq.vehicle.tire_front.coeff.meas.muY1 = daq.vehicle.tire_front.coeff.meas.muY1*muYFrontMult;
-    daq.vehicle.tire_front.coeff.meas.muY2 = daq.vehicle.tire_front.coeff.meas.muY2*muYFrontMult;
-    daq.vehicle.tire_rear.coeff.meas.muY1  = daq.vehicle.tire_rear.coeff.meas.muY1* muYRearMult;
-    daq.vehicle.tire_rear.coeff.meas.muY2  = daq.vehicle.tire_rear.coeff.meas.muY2* muYRearMult;
-    
-    
-    
+    daq.vehicle.tire_front.coeff.meas.muY1 = daq.vehicle.tire_front.coeff.meas.muY1*muYFontMult;
+    daq.vehicle.tire_front.coeff.meas.muY2 = daq.vehicle.tire_front.coeff.meas.muY2*muYFontMult;
+    daq.vehicle.tire_rear.coeff.meas.muY1 = daq.vehicle.tire_rear.coeff.meas.muY1*muYRearMult;
+    daq.vehicle.tire_rear.coeff.meas.muY2 = daq.vehicle.tire_rear.coeff.meas.muY2*muYRearMult;
     
     %Save the daq file to run
     save('daqFile.mat','daq');
