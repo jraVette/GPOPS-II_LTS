@@ -159,7 +159,8 @@ options = gaoptimset('InitialPopulation', c,...
                      'PopulationSize',daq.header.populationSize,...
                      'Vectorized','off',...
                      'Display','diagnose',...
-                     'Generations',1);
+                     'Generations',1,...
+                     'CreationFcn',{'gacreationlinearfeasible'});
 ga(@(x)fitness(x),nvars,[],[],Aeq,Beq,lb,ub,[],options);
 
 
@@ -181,9 +182,13 @@ save(daq.header.gaFilename,'gaInfo')                                       %Save
 %Get some info so we don't repeat iterates
 [bestScore,bestPopulation,allScore,allPopulation,nonSortedScore,nonSortedPopulation,bestIterateInfo,allIterateInfo] = processGaInformationForMatlabGaV2('filename','directLoad','gaInfo',gaInfo,'suppressPlot',true);
 
-%Now, setup file all individual runs
+%Check for non unique iterates
 currentGeneration = gaInfo.generation(iGen);
-for iIter = 1:daq.header.populationSize
+[uniquePoplation,idx] = unique(currentGeneration.Population,'rows');
+gaInfo.generation(iGen).Population = uniquePoplation;
+currentGeneration = gaInfo.generation(iGen);
+
+for iIter = 1:length(currentGeneration.Population)
     daq = gaInfo.daq;
     filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
     filename = fullfile('currentlyRunning',filename);
@@ -199,14 +204,16 @@ for iIter = 1:daq.header.populationSize
     x = currentGeneration.Population(iIter,:);
     
     %See if we've already tested this
-    [boolIsMember, index]=ismember(x,allPopulation,'rows');
-    if boolIsMember %already testested, so just save the score
-        stat.simFinished = true;
-        stat.conv = true;
-        stat.score = allScore(index(1));
-        save('stat.mat','stat');
-        daq.header.simFinished = true;
-    end            
+    if ~isempty(allPopulation)
+        [boolIsMember, index]=ismember(x,allPopulation,'rows');
+        if boolIsMember %already testested, so just save the score
+            stat.simFinished = true;
+            stat.conv = true;
+            stat.score = allScore(index(1));
+            save('stat.mat','stat');
+            daq.header.simFinished = true;
+        end            
+    end
     
     %Update tire model
     daq.header.gaDecisionVariable = x;
