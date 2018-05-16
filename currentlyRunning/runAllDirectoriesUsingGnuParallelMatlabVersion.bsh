@@ -1,0 +1,11 @@
+#!/bin/bash
+rm commands.txt 
+
+directories=$(find . -name 'runBatchMpcSimulationMatlabVersion.m' -exec dirname {} \;)
+for iDir in $directories; do
+    echo "cd $iDir;" 'matlab -nodisplay -nojvm -r "runBatchMpcSimulationMatlabVersion;exit"' >> commands.txt 
+done
+parallel :::: commands.txt 
+
+
+#parallel 'cd {}; matlab -nodisplay -nojvm -r "runBatchMpcSimulationMatlabVersion;exit"'

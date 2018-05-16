@@ -1,0 +1,19 @@
+#!/bin/bash
+
+#This script will looks for files in subdirectories to remove
+
+removalList="mccExcludedFiles.log
+quadCarIPOPTinfo.txt
+readme.txt
+*.ctf
+splash.png
+mccExcludedFiles.log"
+
+for iFile in $removalList
+do
+    echo $iFile
+    find . -maxdepth 2 -name $iFile -exec rm {} \;
+done
+
+find . -maxdepth 2 -name '*mcr*' -type d -exec rm -rf {} \;
+
