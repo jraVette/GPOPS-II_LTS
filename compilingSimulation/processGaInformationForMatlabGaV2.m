@@ -16,9 +16,10 @@ function [bestScore,bestPopulation,allScore,allPopulation,nonSortedScore,nonSort
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 
-defaults = {'filename','gui'  %Used to specify the file or cell of files to get metrics for
+defaults = {'filename','gui'  %Used to specify the file or cell of files to get metrics for. Use 'gui' for a gui or 'directLoad' + modify 'gaInfo' to direclty import this 
             'suppressPlot',false
-            'processGeneration',[]};%leave empty for all, or put integer list for the generations to include
+            'processGeneration',[] %leave empty for all, or put integer list for the generations to include
+            'gaInfo',[]};
 setDefaultsForVarargin(defaults,varargin)
 
 %GUI file selector
@@ -37,8 +38,10 @@ end
 
 %% Loop through files
 for iFile = 1:length(fullFilenames)
-    clear gaInfo
-    load(fullFilenames{iFile})
+    if ~strcmp(fullFilenames{1},'directLoad')
+        clear gaInfo
+        load(fullFilenames{iFile})
+    end
     
     %Make sure this is a ga file
     if exist('gaInfo','var')
