@@ -11,4 +11,4 @@ commands.txt
 *.log
 /templateIterate
 /testRun*
-/currentlyRunning
+/currentlyRunning/GA*
