@@ -14,7 +14,14 @@ function [bestScore,bestPopulation,allScore,allPopulation,nonSortedScore,nonSort
 %Creation: 28 Sep 2016 - Jeff Anderson
 %Updated:  17 Oct 2016 - Jeff Anderson - I started calling state generation
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+bestScore = [];
+bestPopulation = [];
+allScore = [];
+allPopulation = [];
+nonSortedScore = [];
+nonSortedPopulation = [];
+bestIterateInfo = [];
+allIterateInfo = [];
 
 defaults = {'filename','gui'  %Used to specify the file or cell of files to get metrics for. Use 'gui' for a gui or 'directLoad' + modify 'gaInfo' to direclty import this 
             'suppressPlot',false
@@ -58,6 +65,10 @@ for iFile = 1:length(fullFilenames)
         
     %Loop throught the GA's and grab the information
     for iGen = 1:nGen
+        if ~isfield(gaInfo.generation(iGen),'scores')
+            fprintf('No score info on file\n')
+            break; 
+        end
         if ~isempty(gaInfo.generation(iGen).scores) && ismember(iGen,processGeneration)
             scoreGen{iGen} = gaInfo.generation(iGen).scores;
             allScore = [allScore; gaInfo.generation(iGen).scores];
@@ -69,10 +80,16 @@ for iFile = 1:length(fullFilenames)
     nonSortedPopulation = allPopulation;
     
     [~,ind] = sort(allScore,'ascend');
-    bestPopulation = allPopulation(ind(1),:);
-    bestScore = allScore(ind(1));
-    allPopulation = allPopulation(ind,:);
-    allScore = allScore(ind);
+    
+    if numel(ind)>0
+        bestPopulation = allPopulation(ind(1),:);
+        bestScore = allScore(ind(1));
+        allPopulation = allPopulation(ind,:);
+        allScore = allScore(ind);
+        
+    else
+        break
+    end
     
     %Find the best iterate in the gaInfo file
     count = 1; %Conter for the best iterates
