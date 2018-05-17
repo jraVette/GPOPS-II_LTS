@@ -290,7 +290,7 @@ daq = gaInfo.daq;
 currentDirectory = pwd;
 nonExistantSims = [];
 iterToMove = [];
-for iIter = 1:daq.header.populationSize
+for iIter = 1:size(gaInfo.generation(iGen).Population,2)
     filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
     filename = fullfile('currentlyRunning',filename);
     if exist(filename,'dir')
