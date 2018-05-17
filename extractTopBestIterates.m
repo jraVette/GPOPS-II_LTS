@@ -23,6 +23,12 @@ if ~exist(folderToCopyBestIteratesTo,'dir');
     mkdir(folderToCopyBestIteratesTo);
 end
 
+%Make sure that nTopIteratesToCopy isn't greater than the population
+if nTopIteratesToCopy > length(nonSortedScore)
+    nTopIteratesToCopy = length(nonSortedScore);
+end
+    
+
 %Loop through iterates and copy
 for iIter = 1:nTopIteratesToCopy
     %Construct foldername
