@@ -2,13 +2,13 @@
 gaDir=$(pwd)
 while :
 do
-	echo "Current Directory" $PWD
-    matlab -nodisplay -nojvm -r "asyncGA;exit"
-    sleep 1
+	echo "Current Directory:" $PWD
+	./run_runAsyncGa.sh /usr/local/MATLAB/MATLAB_Compiler_Runtime/v84
+    sleep 20 #Let time for the files to save out
 
     cd "$gaDir/currentlyRunning" 
-    echo "Current Directory" $PWD
+    echo "Current Directory:" $PWD
     ./runAllDirectoriesUsingGnuParallelCompiledVersion.bsh
     cd "$gaDir"
-    sleep 1
+    sleep 20
 done

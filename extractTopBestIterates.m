@@ -24,8 +24,8 @@ if ~exist(folderToCopyBestIteratesTo,'dir');
 end
 
 %Make sure that nTopIteratesToCopy isn't greater than the population
-if nTopIteratesToCopy > length(nonSortedScore)
-    nTopIteratesToCopy = length(nonSortedScore);
+if nTopIteratesToCopy > length(allIterateInfo)
+    nTopIteratesToCopy = length(allIterateInfo);
 end
     
 

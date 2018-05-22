@@ -12,3 +12,4 @@ commands.txt
 /templateIterate
 /testRun*
 /currentlyRunning/GA*
+/runAsyncGa/*

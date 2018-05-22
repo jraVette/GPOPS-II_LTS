@@ -207,11 +207,15 @@ for iIter = 1:length(currentGeneration.Population)
     if ~isempty(allPopulation)
         [boolIsMember, index]=ismember(x,allPopulation,'rows');
         if boolIsMember %already testested, so just save the score
-            stat.simFinished = true;
-            stat.conv = true;
-            stat.score = allScore(index(1));
-            save('stat.mat','stat');
+            daq = gaInfo.daq;
+            daq.status.currentSegment = 1;
+            daq.rawData.distance.meas = nan;
             daq.header.simFinished = true;
+            daq.header.conv = true;
+            genStats(daq)
+            load('stat.mat')
+            stat.lapTime = allScore(index(1));
+            save('stat.mat','stat');
         end            
     end
     
@@ -290,7 +294,7 @@ daq = gaInfo.daq;
 currentDirectory = pwd;
 nonExistantSims = [];
 iterToMove = [];
-for iIter = 1:size(gaInfo.generation(iGen).Population,2)
+for iIter = 1:size(gaInfo.generation(iGen).Population,1)
     filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
     filename = fullfile('currentlyRunning',filename);
     if exist(filename,'dir')
@@ -309,8 +313,10 @@ for iIter = 1:size(gaInfo.generation(iGen).Population,2)
         
         %% COST FUNCTION OUTER LOOP
         %Load the solution
-        solDaq = load(stat.filename);
-        solDaq = solDaq.daq;
+        if isfield(stat,'filename')
+            solDaq = load(stat.filename);
+            solDaq = solDaq.daq;
+        end
         
         if stat.simFinished && stat.conv
             stat.score = stat.lapTime;
@@ -415,9 +421,9 @@ if isempty(ind)
         iIter = iterToMove(i);
         filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
         filename = fullfile('currentlyRunning',filename);
-%         systemCommand = sprintf('mv %s finishedRunning/',filename);
-%         system(systemCommand);
-        movefile(filename,'finishedRunning')
+        systemCommand = sprintf('mv %s finishedRunning/',filename);
+        system(systemCommand);
+%         movefile(filename,'finishedRunning')
     end
     
     %Just save the top iterates if that's what we chose to do in the
@@ -430,6 +436,5 @@ if isempty(ind)
 end
     
 end %evaluatePopulationScores
-
 
 
