@@ -2,7 +2,7 @@ function extractTopBestIterates(varargin)
 %Updated to use for overall or for generation
 
 defaults = {'lookAtGeneration', []                         %Leave empty for overall, or pass in the integer value of the generation
-            'nTopIteratesToCopy',10
+            'nTopIteratesToCopy',30
             'folderToCopyBestIteratesTo','bestIterates'
             'finishedRunningDirectory','finishedRunning'
             'removeOldBestIterateFolder',false};
@@ -38,6 +38,8 @@ for iIter = 1:nTopIteratesToCopy
         searchString = sprintf('*gen_%03i*iter_%03i*',gen,iter);
         systemCommand = sprintf('find ./%s -name %s',finishedRunningDirectory,searchString);
         [~,directoryName] = system(systemCommand);
+        directoryName = strsplit(directoryName);
+        directoryName = directoryName{1};
         directoryName =  strtrim(directoryName);
         [~,lookForFolderWithName] = fileparts(directoryName);
 %         lookForFolderWithName = sprintf('GA_gen_%03i_iter_%03i',gen,iter);

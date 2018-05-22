@@ -1,0 +1,15 @@
+#!/bin/bash
+
+#Install folders necessary to run compiled asyncGa
+mkdir deployToCloud
+cp -r ./templateIterate ./deployToCloud/templateIterate
+cp -r ./currentlyRunning ./deployToCloud/currentlyRunning
+cp -r ./runAsyncGa/for_testing/* ./deployToCloud/
+cp daqFile.mat ./deployToCloud/daqFile.mat
+cp ./runGAContinuiouslyCompiled.bsh ./deployToCloud/runGAContinuiouslyCompiled.bsh
+cp ./installOnCloud.bsh ./deployToCloud/installOnCloud.bsh
+
+#Tar ball it
+tar -cvf deployToCloud.tar deployToCloud
+
+
