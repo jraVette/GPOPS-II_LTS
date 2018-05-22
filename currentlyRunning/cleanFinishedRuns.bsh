@@ -7,7 +7,10 @@ quadCarIPOPTinfo.txt
 readme.txt
 *.ctf
 splash.png
-mccExcludedFiles.log"
+mccExcludedFiles.log
+run_runMpcSimulation.sh
+runMpcSimulation
+runBatchMpcSimulationMatlabVersion.m"
 
 for iFile in $removalList
 do

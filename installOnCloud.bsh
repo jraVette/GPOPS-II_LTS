@@ -1,0 +1,33 @@
+#!/bin/bash
+
+#Cloud install files
+
+#Update machine
+sudo apt update
+sudo apt install --assume-yes parallel 
+sudo apt install --assume-yes unzip
+sudo apt install --assume-yes libxt6 #needed by MATLAB MCR
+
+#google drive
+GDRIVE_DIRECTORY="/usr/local/bin/gdrive"
+if [ ! -d "$GDRIVE_DIRECTORY" ]; then
+	wget "https://docs.google.com/uc?id=0B3X9GlR6EmbnQ0FtZmJJUXEyRTA&export=download"
+	mv uc?* gdrive
+	chmod +x gdrive
+	sudo install gdrive "$GDRIVE_DIRECTORY"
+fi
+
+#Install Matlab MCR if necessary
+MCR_DIRECTORY="/usr/local/MATLAB/MATLAB_Compiler_Runtime"
+if [ ! -d "$MCR_DIRECTORY" ]; then
+	mkdir matlabInstall
+	cd matlabInstall
+	wget http://ssd.mathworks.com/supportfiles/downloads/R2014b/deployment_files/R2014b/installers/glnxa64/MCR_R2014b_glnxa64_installer.zip
+	unzip *
+	sudo ./install -mode silent -agreeToLicense yes
+	cd ..
+fi
+
+
+
+
