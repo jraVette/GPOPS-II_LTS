@@ -6,6 +6,9 @@ do
 	./run_runAsyncGa.sh /usr/local/MATLAB/MATLAB_Compiler_Runtime/v84
     sleep 20 #Let time for the files to save out
 
+    rm -r finishedRunning
+    sleep 20
+    
     cd "$gaDir/currentlyRunning" 
     echo "Current Directory:" $PWD
     ./runAllDirectoriesUsingGnuParallelCompiledVersion.bsh
