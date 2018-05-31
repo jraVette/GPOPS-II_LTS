@@ -12,3 +12,5 @@ commands.txt
 /templateIterate
 /testRun*
 /currentlyRunning/GA*
+/deployToCloud*
+/runAsyncGa/

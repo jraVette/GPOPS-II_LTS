@@ -28,6 +28,14 @@ if [ ! -d "$MCR_DIRECTORY" ]; then
 	cd ..
 fi
 
+#Copy in the reference data
+mkdir compilingSimulation
+cd compilingSimulation
+wget https://www.dropbox.com/s/pitgsaz9qiomyrj/driverA_EstInputs_T17.mat?dl=0
+mv driverA_EstInputs_T17.mat* driverA_EstInputs_T17.mat
+wget https://www.dropbox.com/s/ch5r6d5ps2bhje0/driverB_EstInputs_T17.mat?dl=0
+mv driverB_EstInputs_T17.mat* driverB_EstInputs_T17.mat
+cd ..
 
 
 

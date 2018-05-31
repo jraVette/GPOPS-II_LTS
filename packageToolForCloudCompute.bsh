@@ -8,6 +8,7 @@ cp -r ./runAsyncGa/for_testing/* ./deployToCloud/
 cp daqFile.mat ./deployToCloud/daqFile.mat
 cp ./runGAContinuiouslyCompiled.bsh ./deployToCloud/runGAContinuiouslyCompiled.bsh
 cp ./installOnCloud.bsh ./deployToCloud/installOnCloud.bsh
+cp ./compilingSimulation/generateInitialDaq.m ./deployToCloud/generateInitialDaq.m
 
 #Tar ball it
 tar -cvf deployToCloud.tar deployToCloud

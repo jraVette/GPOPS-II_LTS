@@ -305,10 +305,19 @@ for iIter = 1:daq.header.populationSize
         solDaq = solDaq.daq;
         
         if stat.simFinished && stat.conv
-            diffData = compareDaqChannel({'vx';'ey'},refDaq,'distance',solDaq,'suppressPlot',true);
-            stat.score = diffData.vx.integrated2NormError/1.7095e+04 + ...
-                         diffData.ey.integrated2NormError/9.0544e+03;
-        
+            diffData = compareDaqChannel(gaInfo.daq.header.gaCost.channelsToCompare,...
+                                         refDaq,...
+                                         gaInfo.daq.header.gaCost.independentVarChannel,...
+                                         solDaq,...
+                                         'suppressPlot',true);
+            J = 0;
+            for iCh = 1:length(gaInfo.daq.header.gaCost.channelsToCompare)
+                ch = gaInfo.daq.header.gaCost.channelsToCompare{iCh};
+                J = J + gaInfo.daq.header.gaCost.weighting(iCh)*diffData.(ch).integrated2NormError/gaInfo.daq.header.gaCost.scaling(iCh);
+                temp(iCh) = diffData.(ch).integrated2NormError;
+                
+            end    
+            stat.score = J;
         else
             stat.score = daq.header.nonConvergentCost;
         end
@@ -409,9 +418,9 @@ if isempty(ind)
         iIter = iterToMove(i);
         filename = sprintf('GA_gen_%03i_iter_%03i',iGen,iIter);
         filename = fullfile('currentlyRunning',filename);
-%         systemCommand = sprintf('mv %s finishedRunning/',filename);
-%         system(systemCommand);
-        movefile(filename,'finishedRunning')
+        systemCommand = sprintf('mv %s finishedRunning/',filename);
+        system(systemCommand);
+%         movefile(filename,'finishedRunning')
     end
     
     %Just save the top iterates if that's what we chose to do in the

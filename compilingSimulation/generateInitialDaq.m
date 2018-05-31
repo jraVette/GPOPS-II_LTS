@@ -13,7 +13,7 @@ setDefaultsForVarargin(defaults,varargin)
 % carFilename = 'LimebeerF1Car.mat';
 load(carFilename);
 
-refDaqFile = 'driverA_EstInputs_T17.mat'
+refDaqFile = 'driverB_EstInputs_T17.mat'
 refDaq = load(refDaqFile);
 refDaq = refDaq.daq;
 
@@ -87,13 +87,7 @@ ind  = findNearestPoint(initialDistance,refDaq.rawData.distance.meas);
 x0Daq = assembleNewDaqAtIndicies(ind,refDaq);
 x0   = writeDaqChannelsToMatrix(x0Daq,'selectedChannels',variableNames.stateNames);
 clear x0Daq
-%vx0 = 50;
-%vy0 = 0;
-%r0  = 0;
-%ey0 = 0;
-%ePsi0 = 0;
-%t0 = 0;
-%x0 = [vx0 vy0 r0 ey0 ePsi0 t0 ];
+
 x0(end) = 0;
 x0 = x0.*scaling.state;
 
@@ -150,15 +144,6 @@ setup.auxdata.muMultX                   = 0.58;
 setup.auxdata.muMultY                   = 1.6;
 setup.auxdata.costTime                  = 1; %Note gpopsMPC will overwrite this, need it to compile adigator
 setup.auxdata.costVx                    = 1; %Note gpopsMPC will overwrite this, need it to compile adigator
-% vxTarget = 100;
-% setup.auxdata.stageCost.targetState     = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0 0];
-% setup.auxdata.stageCost.scaling         = [1        1 1 0       0       0       0       0 1 1 0];
-% setup.auxdata.stageCost.weight          = [1];
-
-% setup.auxdata.terminalCost.targetState  = [vxTarget 0 0 omegaUb omegaUb omegaUb omegaUb 0 0 0];
-% setup.auxdata.terminalCost.scaling      = [vxTarget vyMax rMax omegaUb omegaUb omegaUb omegaUb TMax eyMax ePsiMax];
-% setup.auxdata.terminalCost.weight       = 0;
-
 
 
 
@@ -189,41 +174,18 @@ setup.mesh.colpointsmax = 6;
 setup.mesh.colpointsmin = 2;
 setup.mesh
 acceptableNlpOutputs = [0 1 ] ; 
-nextGuessType = 'exactPreviousGuess'; % basedOffPrevious  basedOffPreviousStartAndEndPoints  none
-%Notes: none did the best, made it to 350m
-%'exactPreviousGuess' made it to 250m
-%'basedOffPrevious' made it to 325
-%
+nextGuessType = 'exactPreviousGuess'; % basedOffPrevious  basedOffPreviousStartAndEndPoints  none %PRETTY SURE UNUSED DEPRECATE
+
 
 
 %% Guess
 if loadGuess
-%     sGuess = linspace(0,horizon,101)';
     g = 9.81;
     m = vehicle.parameter.mass.meas;
     a = vehicle.parameter.a.meas;
     b = vehicle.parameter.b.meas;
     wf = -b/(a+b)*m*g/2;
     wr = -a/(a+b)*m*g/2;
-%     uGuess = repmat([0 0 0 0.08 0.08 wf wf wr wr],length(sGuess),1);
-%     clear m a b wf wr g
-%     guessDaq.header.setup = setup; %Mimic how we'll have the daq in the final form for OCP
-%     guessDaq.header.scaling = scaling;
-%     guessDaq = generateGuessDaq(sGuess,x0,uGuess,guessDaq);
-%     setup.guess.phase.time    = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.indepVarName);
-%     setup.guess.phase.state   = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.stateNames);
-%     setup.guess.phase.control = writeDaqChannelsToMatrix(guessDaq,'selectedChannels',variableNames.controlNames);
-%     setup.guess.phase.integral     = 2;
-
-
-    %Load file
-    % guessFile = load('2018-01-24_11_17_25_solutionSnapshot_Horizon001.mat');
-    % guessFile = load('2018-02-06_16_02_23_solutionSnapshot_Horizon001_corvette.mat');
-    % setup.guess.phase.time = guessFile.segDaq.gpopsOutput.result.solution.phase.time;
-    % setup.guess.phase.state = [guessFile.segDaq.gpopsOutput.result.solution.phase.state];
-    % setup.guess.phase.control = [guessFile.segDaq.gpopsOutput.result.solution.phase.control];
-    % setup.guess.phase.integral = guessFile.segDaq.gpopsOutput.result.solution.phase.integral;
-
 
     %Near arbitrary initial guess
     setup.guess.phase.time    = [0; finishDistance-initialDistance];
@@ -239,7 +201,7 @@ if loadGuess
 end
 
 %% Ga options
-populationSize = 100; 
+populationSize = 96; 
 nIteratesToSavePerGeneration = 10; %Leave empty for all
 timeToGiveUpOnSim = 100*60*60;
 nonConvergentCost = 1000;
@@ -247,6 +209,31 @@ simFinished = false; %Flag for stats
 conv = nan; %Flag for stats
 saveDiaryFiles = false;
 cleanUpRunningDirecotry = true;
+
+gaCost.independentVarChannel = 'distance';
+    %Ch name    %Weight Q   %Scaling S
+tempCost = {  
+    'delta'     0           1.142035744625003e-01
+    'ePsi'      0           2.590834982889016e+00
+    'ey'        1           7.369512523277982e+03
+    'fz_L1'     0           2.507200546069650e+08
+    'fz_L2'     0           2.978229664338260e+08
+    'fz_R1'     0           7.521499820961577e+07
+    'fz_R2'     0           2.771859743041586e+08
+    'kappa_L1'  0            3.237185060229598e-02
+    'kappa_L2'  0            1.126754617810116e-01
+    'kappa_R1'  0            1.550567448709579e-01
+    'kappa_R2'  0            1.885937567533368e-01
+    'time'      0           1.189521250818846e+07
+    'vx'        2           1.494813341729434e+04
+    'vy'        0           2.444859968954880e+02
+    'yawRate'   0           1.760359618786300e+00
+};    
+gaCost.channelsToCompare = tempCost(:,1);
+gaCost.weighting = cell2matrix(tempCost(:,2));
+gaCost.scaling = cell2matrix(tempCost(:,3));
+clear tempCost
+
 
 
 %% DAQ File
