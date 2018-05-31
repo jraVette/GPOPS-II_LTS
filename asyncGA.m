@@ -84,17 +84,24 @@ function gaInfo = setupNewGeneration(gaInfo)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 daq = gaInfo.daq;
 
+%% DECISION VARIABLES - EDIT HERE 
 %Get the sizes of the decisions variables and bounds
-muYFontMult = 1;
-muYRearMult = 1;
-c = [muYFontMult  muYRearMult];
-lb = [0.9*muYFontMult 0.9*muYRearMult];
-ub = [1.1*muYFontMult 1.1*muYRearMult];
+muFrontMult = 1;
+muRearMult = 1;
+alphaFrontMult = 1;
+alphaRearMult = 1; 
+
+
+c = [muFrontMult  muRearMult alphaFrontMult alphaRearMult];
+lb = [0.95*muFrontMult 0.95*muRearMult 0.95*alphaFrontMult 0.95*alphaFrontMult];
+ub = [1.05*muFrontMult 1.05*muRearMult 1.05*alphaFrontMult 1.05*alphaRearMult];
 nvars = numel(c);
 
 %Constraints setup for muDistribution
-Aeq = [1 1];
-Beq = [2];
+Aeq = [1 1 0 0
+       0 0 1 1];
+Beq = [2
+       2];
 
 %Decision variables
 cInitial = reshape(c',[],nvars);
@@ -220,13 +227,25 @@ for iIter = 1:length(currentGeneration.Population)
     end
     
     %Update tire model
+    %% EDIT HERE
     daq.header.gaDecisionVariable = x;
-    muYFrontMult = x(1);
-    muYRearMult = x(2);
-    daq.vehicle.tire_front.coeff.meas.muY1 = daq.vehicle.tire_front.coeff.meas.muY1*muYFontMult;
-    daq.vehicle.tire_front.coeff.meas.muY2 = daq.vehicle.tire_front.coeff.meas.muY2*muYFontMult;
-    daq.vehicle.tire_rear.coeff.meas.muY1 = daq.vehicle.tire_rear.coeff.meas.muY1*muYRearMult;
-    daq.vehicle.tire_rear.coeff.meas.muY2 = daq.vehicle.tire_rear.coeff.meas.muY2*muYRearMult;
+    muFrontMult = x(1);
+    muRearMult = x(2);
+    alphaFrontMult = x(3);
+    alphaRearMult = x(4);
+    daq.vehicle.tire_front.coeff.meas.muY1 = daq.vehicle.tire_front.coeff.meas.muY1*muFrontMult;
+    daq.vehicle.tire_front.coeff.meas.muY2 = daq.vehicle.tire_front.coeff.meas.muY2*muFrontMult;
+    daq.vehicle.tire_rear.coeff.meas.muY1 = daq.vehicle.tire_rear.coeff.meas.muY1*muRearMult;
+    daq.vehicle.tire_rear.coeff.meas.muY2 = daq.vehicle.tire_rear.coeff.meas.muY2*muRearMult;
+    daq.vehicle.tire_front.coeff.meas.muX1 = daq.vehicle.tire_front.coeff.meas.muX1*muFrontMult;
+    daq.vehicle.tire_front.coeff.meas.muX2 = daq.vehicle.tire_front.coeff.meas.muX2*muFrontMult;
+    daq.vehicle.tire_rear.coeff.meas.muX1 = daq.vehicle.tire_rear.coeff.meas.muX1*muRearMult;
+    daq.vehicle.tire_rear.coeff.meas.muX2 = daq.vehicle.tire_rear.coeff.meas.muX2*muRearMult;
+    daq.vehicle.tire_front.coeff.meas.alpha1 = daq.vehicle.tire_front.coeff.meas.alpha1*alphaFrontMult;
+    daq.vehicle.tire_front.coeff.meas.alpha2 = daq.vehicle.tire_front.coeff.meas.alpha2*alphaFrontMult;
+    daq.vehicle.tire_rear.coeff.meas.alpha1 = daq.vehicle.tire_rear.coeff.meas.alpha1*alphaRearMult;
+    daq.vehicle.tire_rear.coeff.meas.alpha2 = daq.vehicle.tire_rear.coeff.meas.alpha2*alphaRearMult;
+    
     
     %Save the daq file to run
     save('daqFile.mat','daq');

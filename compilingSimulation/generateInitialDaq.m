@@ -13,7 +13,7 @@ setDefaultsForVarargin(defaults,varargin)
 % carFilename = 'LimebeerF1Car.mat';
 load(carFilename);
 
-refDaqFile = 'GA_Best_DriverA_daqFile.mat'
+refDaqFile = 'GA_Best_DriverB_daqFile.mat'
 refDaq = load(refDaqFile);
 refDaq = refDaq.daq;
 
@@ -183,7 +183,7 @@ if loadGuess
 end
 
 %% Ga options
-populationSize = 100; 
+populationSize = 96; 
 nIteratesToSavePerGeneration = 10; %Leave empty for all
 timeToGiveUpOnSim = 100*60*60;
 nonConvergentCost = 1000;
