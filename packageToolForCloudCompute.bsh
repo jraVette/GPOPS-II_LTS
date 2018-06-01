@@ -1,15 +1,25 @@
 #!/bin/bash
 
+#Remove the deploy folder if it is there
+deployFolder="deployToCloud"
+if [  -d "$deployFolder" ]; then
+	rm -r "$deployFolder"*
+fi
+
 #Install folders necessary to run compiled asyncGa
-mkdir deployToCloud
-cp -r ./templateIterate ./deployToCloud/templateIterate
-cp -r ./currentlyRunning ./deployToCloud/currentlyRunning
-cp -r ./runAsyncGa/for_testing/* ./deployToCloud/
-cp daqFile.mat ./deployToCloud/daqFile.mat
-cp ./runGAContinuiouslyCompiled.bsh ./deployToCloud/runGAContinuiouslyCompiled.bsh
-cp ./installOnCloud.bsh ./deployToCloud/installOnCloud.bsh
+mkdir $deployFolder
+
+cp -r ./templateIterate "./$deployFolder/templateIterate"
+cp -r ./currentlyRunning "./$deployFolder/currentlyRunning"
+cp -r ./runAsyncGa/for_testing/* "./$deployFolder/"
+cp ./runGAContinuiouslyCompiled.bsh "./$deployFolder/runGAContinuiouslyCompiled.bsh"
+cp ./installOnCloud.bsh "./$deployFolder/installOnCloud.bsh"
+cp ./compilingSimulation/generateInitialDaq.m "./$deployFolder/generateInitialDaq.m"
+
+
+cd $deployFolder
+matlab -nodisplay -nojvm -r "addpath(genpath('../compilingSimulation'));daq=generateInitialDaq;save('daqFile.mat','daq');exit"
+cd ..
 
 #Tar ball it
-tar -cvf deployToCloud.tar deployToCloud
-
-
+tar -cvf "$deployFolder".tar "$deployFolder"/
